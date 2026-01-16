@@ -1,12 +1,14 @@
-import { Controller, Get, Query, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Query, Param, Post } from '@nestjs/common';
 import { ArticleService, ArticleFilters } from './article.service';
 import { StatsService } from './stats.service';
+import { NewsCollectorService } from '../collector/news-collector.service';
 
 @Controller('api')
 export class ArticleController {
   constructor(
     private readonly articleService: ArticleService,
-    private readonly statsService: StatsService
+    private readonly statsService: StatsService,
+    private readonly newsCollector: NewsCollectorService
   ) {}
 
   @Get('articles')
@@ -77,5 +79,10 @@ export class ArticleController {
   @Get('stats/stock')
   async getStockData() {
     return this.statsService.getStockData();
+  }
+
+  @Post('collect')
+  async triggerCollection() {
+    return this.newsCollector.triggerCollection();
   }
 }

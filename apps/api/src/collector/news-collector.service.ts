@@ -4,8 +4,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import Parser from 'rss-parser';
 import { createHash } from 'crypto';
-import { PrismaClient } from '@trump-alert/database';
-import { NEWS_SOURCES } from '@trump-alert/shared';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const parser = new Parser();

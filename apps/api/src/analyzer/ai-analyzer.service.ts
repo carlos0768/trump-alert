@@ -1,13 +1,56 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { PrismaClient } from '@trump-alert/database';
-import {
-  SUMMARIZE_PROMPT,
-  SENTIMENT_PROMPT,
-  BIAS_PROMPT,
-  IMPACT_PROMPT,
-  fillPrompt,
-} from '@trump-alert/shared';
+import { PrismaClient } from '@prisma/client';
+
+// AI Prompts
+const SUMMARIZE_PROMPT = `
+以下のニュース記事を3つの要点（各30文字以内）にまとめてください。
+
+記事タイトル: {title}
+本文: {content}
+
+JSON形式で返してください:
+{ "summary": ["要点1", "要点2", "要点3"] }
+`;
+
+const SENTIMENT_PROMPT = `
+以下の記事のトーンを分析し、-1.0（非常にネガティブ）から+1.0（非常にポジティブ）の数値で評価してください。
+
+記事: {content}
+
+JSON形式: { "sentiment": 0.5 }
+`;
+
+const BIAS_PROMPT = `
+この記事の政治的バイアスを判定してください。
+- "Left": 左派寄り
+- "Center": 中立
+- "Right": 右派寄り
+
+記事: {content}
+
+JSON形式: { "bias": "Center" }
+`;
+
+const IMPACT_PROMPT = `
+このニュースの緊急度を判定してください:
+- S: 極めて重要（選挙結果、逮捕、重大発言など）
+- A: 重要（政策発表、裁判進展など）
+- B: やや重要（支持率変動、メディア出演など）
+- C: 参考情報（日常的な発言、過去記事の引用など）
+
+記事タイトル: {title}
+
+JSON形式: { "impactLevel": "A" }
+`;
+
+function fillPrompt(template: string, values: Record<string, string>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(values)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+  }
+  return result;
+}
 
 const prisma = new PrismaClient();
 

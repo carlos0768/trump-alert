@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PrismaClient } from '@trump-alert/database';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
