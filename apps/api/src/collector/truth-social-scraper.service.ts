@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { chromium, Browser, Page } from 'playwright';
 import { PrismaClient } from '@prisma/client';
 
@@ -24,9 +22,7 @@ export class TruthSocialScraperService {
   private readonly logger = new Logger(TruthSocialScraperService.name);
   private browser: Browser | null = null;
 
-  constructor(@InjectQueue('ai-analysis') private aiAnalysisQueue: Queue) {}
-
-  // Run every minute
+  // Run every minute (disabled by default)
   @Cron('*/1 * * * *')
   async scrapeTruthSocial() {
     if (process.env.ENABLE_SCRAPING !== 'true') {
@@ -68,7 +64,6 @@ export class TruthSocialScraperService {
       for (const post of posts) {
         const saved = await this.savePost(post);
         if (saved) {
-          await this.aiAnalysisQueue.add('analyze', { articleId: saved.id });
           newPostsCount++;
         }
       }

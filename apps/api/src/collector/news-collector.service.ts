@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import Parser from 'rss-parser';
 import { createHash } from 'crypto';
 import { PrismaClient } from '@prisma/client';
@@ -50,16 +48,11 @@ export class NewsCollectorService {
     },
   ];
 
-  constructor(
-    @InjectQueue('news-fetch') private newsFetchQueue: Queue,
-    @InjectQueue('ai-analysis') private aiAnalysisQueue: Queue
-  ) {}
-
   // Run every 5 minutes
   @Cron(CronExpression.EVERY_5_MINUTES)
   async collectNews() {
-    this.logger.log('Starting news collection...');
-    await this.newsFetchQueue.add('fetch-all', {});
+    this.logger.log('Starting scheduled news collection...');
+    await this.fetchAllFeeds();
   }
 
   async fetchAllFeeds(): Promise<number> {
@@ -102,8 +95,6 @@ export class NewsCollectorService {
       if (!exists && item.link) {
         const article = await this.saveArticle(item, feed);
         if (article) {
-          // Queue for AI analysis
-          await this.aiAnalysisQueue.add('analyze', { articleId: article.id });
           newCount++;
         }
       }
