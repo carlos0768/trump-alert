@@ -4,7 +4,11 @@ export const NEWS_SOURCES = {
   CNN: { name: 'CNN', bias: 'Left', url: 'https://cnn.com' },
   MSNBC: { name: 'MSNBC', bias: 'Left', url: 'https://msnbc.com' },
   NYT: { name: 'New York Times', bias: 'Left', url: 'https://nytimes.com' },
-  WAPO: { name: 'Washington Post', bias: 'Left', url: 'https://washingtonpost.com' },
+  WAPO: {
+    name: 'Washington Post',
+    bias: 'Left',
+    url: 'https://washingtonpost.com',
+  },
 
   // Center
   BBC: { name: 'BBC', bias: 'Center', url: 'https://bbc.com' },
@@ -16,10 +20,18 @@ export const NEWS_SOURCES = {
   FOX: { name: 'Fox News', bias: 'Right', url: 'https://foxnews.com' },
   NEWSMAX: { name: 'Newsmax', bias: 'Right', url: 'https://newsmax.com' },
   BREITBART: { name: 'Breitbart', bias: 'Right', url: 'https://breitbart.com' },
-  DAILYWIRE: { name: 'The Daily Wire', bias: 'Right', url: 'https://dailywire.com' },
+  DAILYWIRE: {
+    name: 'The Daily Wire',
+    bias: 'Right',
+    url: 'https://dailywire.com',
+  },
 
   // Social Media
-  TRUTHSOCIAL: { name: 'Truth Social', bias: 'Right', url: 'https://truthsocial.com' },
+  TRUTHSOCIAL: {
+    name: 'Truth Social',
+    bias: 'Right',
+    url: 'https://truthsocial.com',
+  },
   TWITTER: { name: 'X (Twitter)', bias: 'Center', url: 'https://twitter.com' },
 } as const;
 
@@ -31,7 +43,8 @@ export const RSS_FEEDS = {
   FOX_POLITICS: 'https://moxie.foxnews.com/google-publisher/politics.xml',
   BBC_US: 'http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml',
   NHK_WORLD: 'https://www3.nhk.or.jp/rss/news/cat6.xml',
-  REUTERS_US: 'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best',
+  REUTERS_US:
+    'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best',
 } as const;
 
 // API Rate Limits (requests per minute)

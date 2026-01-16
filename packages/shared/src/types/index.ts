@@ -76,7 +76,9 @@ export const TrumpIndexDataPointSchema = z.object({
 export type TrumpIndexDataPoint = z.infer<typeof TrumpIndexDataPointSchema>;
 
 // API Response Types
-export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(
+  itemSchema: T
+) =>
   z.object({
     items: z.array(itemSchema),
     total: z.number().int().nonnegative(),

@@ -1,0 +1,35 @@
+{
+  "name": "@trump-alert/api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.3.0",
+    "@nestjs/config": "^3.1.1",
+    "@nestjs/core": "^10.3.0",
+    "@nestjs/platform-express": "^10.3.0",
+    "@nestjs/schedule": "^4.0.0",
+    "@nestjs/bullmq": "^10.0.1",
+    "bullmq": "^5.1.0",
+    "ioredis": "^5.3.2",
+    "openai": "^4.24.0",
+    "playwright": "^1.40.0",
+    "rss-parser": "^3.13.0",
+    "reflect-metadata": "^0.2.1",
+    "rxjs": "^7.8.1",
+    "zod": "^3.22.4",
+    "@trump-alert/database": "workspace:*",
+    "@trump-alert/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.3.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
