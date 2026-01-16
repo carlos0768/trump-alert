@@ -16,6 +16,10 @@ model Article {
   publishedAt DateTime
   imageUrl    String?
 
+  // Japanese translations
+  titleJa     String?
+  contentJa   String?  @db.Text
+
   // AI Analysis Data
   summary     String[]
   sentiment   Float?
