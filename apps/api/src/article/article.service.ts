@@ -75,37 +75,60 @@ export class ArticleService {
         take: limit,
         skip: offset,
         include: {
-          tags: true,
+          tags: {
+            include: { tag: true },
+          },
         },
       }),
       prisma.article.count({ where }),
     ]);
 
+    // Transform to flatten tags
+    const transformedArticles = articles.map((article) => ({
+      ...article,
+      tags: article.tags.map((at) => at.tag),
+    }));
+
     return {
-      articles,
+      articles: transformedArticles,
       total,
       hasMore: offset + limit < total,
     };
   }
 
   async findById(id: string) {
-    return prisma.article.findUnique({
+    const article = await prisma.article.findUnique({
       where: { id },
       include: {
-        tags: true,
+        tags: {
+          include: { tag: true },
+        },
       },
     });
+
+    if (!article) return null;
+
+    return {
+      ...article,
+      tags: article.tags.map((at) => at.tag),
+    };
   }
 
   async getRelatedArticles(id: string, limit: number = 5) {
     const article = await prisma.article.findUnique({
       where: { id },
-      include: { tags: true },
+      include: {
+        tags: {
+          include: { tag: true },
+        },
+      },
     });
 
     if (!article) {
       return [];
     }
+
+    const tagIds = article.tags.map((at) => at.tagId);
 
     // Find articles with similar tags or same bias
     return prisma.article.findMany({
@@ -116,7 +139,7 @@ export class ArticleService {
           {
             tags: {
               some: {
-                id: { in: article.tags.map((t) => t.id) },
+                tagId: { in: tagIds },
               },
             },
           },

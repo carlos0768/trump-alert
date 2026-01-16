@@ -3,10 +3,20 @@ import { PrismaClient } from '@trump-alert/database';
 
 const prisma = new PrismaClient();
 
-interface HourlyData {
+export interface HourlyData {
   hour: string;
   avgSentiment: number;
   articleCount: number;
+}
+
+interface ImpactItem {
+  impactLevel: string | null;
+  _count: number;
+}
+
+interface BiasItem {
+  bias: string | null;
+  _count: number;
 }
 
 @Injectable()
@@ -91,15 +101,15 @@ export class StatsService {
     return {
       totalArticles,
       avgSentiment: bySentiment._avg.sentiment || 0,
-      byImpact: byImpact.reduce(
-        (acc, item) => {
+      byImpact: (byImpact as ImpactItem[]).reduce(
+        (acc: Record<string, number>, item: ImpactItem) => {
           if (item.impactLevel) acc[item.impactLevel] = item._count;
           return acc;
         },
         {} as Record<string, number>
       ),
-      byBias: byBias.reduce(
-        (acc, item) => {
+      byBias: (byBias as BiasItem[]).reduce(
+        (acc: Record<string, number>, item: BiasItem) => {
           if (item.bias) acc[item.bias] = item._count;
           return acc;
         },
@@ -114,13 +124,18 @@ export class StatsService {
       where: {
         publishedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
-      include: { tags: true },
+      include: {
+        tags: {
+          include: { tag: true },
+        },
+      },
     });
 
     const tagCounts = new Map<string, number>();
     for (const article of recentArticles) {
-      for (const tag of article.tags) {
-        tagCounts.set(tag.name, (tagCounts.get(tag.name) || 0) + 1);
+      for (const articleTag of article.tags) {
+        const tagName = articleTag.tag.name;
+        tagCounts.set(tagName, (tagCounts.get(tagName) || 0) + 1);
       }
     }
 
