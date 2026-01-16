@@ -110,14 +110,15 @@
 - **AI統合:** OpenAI API
   - モデル: `gpt-4o-mini`（コスト削減、速度優先）
   - プロンプトテンプレート（`packages/shared/prompts/`に保存）:
+
     ```typescript
     // summarize.ts
     export const SUMMARIZE_PROMPT = `
     以下のニュース記事を3つの要点（各30文字以内）にまとめてください。
-
+    
     記事タイトル: {title}
     本文: {content}
-
+    
     JSON形式で返してください:
     { "summary": ["要点1", "要点2", "要点3"] }
     `;
@@ -125,9 +126,9 @@
     // sentiment.ts
     export const SENTIMENT_PROMPT = `
     以下の記事のトーンを分析し、-1.0（非常にネガティブ）から+1.0（非常にポジティブ）の数値で評価してください。
-
+    
     記事: {content}
-
+    
     JSON形式: { "sentiment": 0.5 }
     `;
 
@@ -137,9 +138,9 @@
     - "Left": 左派寄り
     - "Center": 中立
     - "Right": 右派寄り
-
+    
     記事: {content}
-
+    
     JSON形式: { "bias": "Center" }
     `;
 
@@ -150,14 +151,16 @@
     - A: 重要（政策発表、裁判進展など）
     - B: やや重要（支持率変動、メディア出演など）
     - C: 参考情報（日常的な発言、過去記事の引用など）
-
+    
     記事タイトル: {title}
-
+    
     JSON形式: { "impactLevel": "A" }
     `;
     ```
+
   - レート制限対策: `p-queue`で並列3リクエストまで、429エラー時は60秒待機
   - エラーハンドリング: 3回失敗したら `impactLevel: "C"` でデフォルト保存
+
 - **ホスティング:**
   - **Frontend:** Vercel（Next.js最適化、自動デプロイ）
   - **Backend/Worker:** Railway（NestJSコンテナ、Dockerfileベース）
@@ -180,6 +183,7 @@
 NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）します。
 
 **News API / RSS:**
+
 - **実装:** `CollectorModule` 内の `NewsCollector.service.ts`
 - **データソース:**
   - News API: `https://newsapi.org/v2/everything?q=Trump&apiKey=xxx`（5分間隔）
@@ -197,6 +201,7 @@ NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）しま
   4. `ai-analysis` キューにジョブ追加
 
 **Social Media (Scraping):**
+
 - **実装:** `TruthSocialScraper.ts`, `TwitterScraper.ts`
 - **Truth Social:**
   - ターゲットURL: `https://truthsocial.com/@realDonaldTrump`
@@ -216,6 +221,7 @@ NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）しま
   - `url`: 投稿への直リンク
 
 **Market Data:**
+
 - **実装:** `MarketDataCollector.service.ts`
 - **データソース:** Alpha Vantage API（無料枠: 25 calls/day → 1時間ごとに取得）
   - エンドポイント: `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=DJT&apiKey=xxx`
@@ -241,6 +247,7 @@ NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）しま
 **実装:** `AnalyzerModule` の `AIAnalyzer.service.ts`
 
 **処理フロー:**
+
 1. BullMQの `ai-analysis` キューからジョブ取得（Article ID）
 2. OpenAI API に並列リクエスト（`Promise.all` で4つのプロンプト同時実行）
 3. 結果をArticleレコードに更新
@@ -249,22 +256,25 @@ NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）しま
 **分析項目:**
 
 **1. 3行要約 (`summary: string[]`)**
+
 - プロンプト: 上記 `SUMMARIZE_PROMPT` 使用
 - 制約: 各要点30文字以内、合計3つ
 - バリデーション: Zodスキーマで配列長チェック
   ```typescript
   const SummarySchema = z.object({
-    summary: z.array(z.string().max(30)).length(3)
+    summary: z.array(z.string().max(30)).length(3),
   });
   ```
 
 **2. Sentiment Score (`sentiment: Float`)**
+
 - プロンプト: `SENTIMENT_PROMPT`
 - 範囲: -1.0（極めてネガティブ）～ +1.0（極めてポジティブ）
 - 例: 逮捕報道 → -0.8、選挙勝利 → +0.9、日常発言 → 0.0
 - バリデーション: `-1 <= sentiment <= 1`
 
 **3. Impact Level (`impactLevel: String`)**
+
 - プロンプト: `IMPACT_PROMPT`
 - 値: `"S" | "A" | "B" | "C"`
 - 判定基準:
@@ -275,6 +285,7 @@ NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）しま
 - デフォルト値: "C"（AI失敗時）
 
 **4. Bias Check (`bias: String`)**
+
 - プロンプト: `BIAS_PROMPT`
 - 値: `"Left" | "Center" | "Right"`
 - ソースごとのデフォルト（AI分析前の仮値）:
@@ -284,6 +295,7 @@ NestJS上のWorkerが以下のソースを定期監視（Cron/Streaming）しま
 - AI分析で上書き可能
 
 **並列処理:**
+
 ```typescript
 // AIAnalyzer.service.ts
 async analyzeArticle(articleId: string) {
@@ -304,6 +316,7 @@ async analyzeArticle(articleId: string) {
 ```
 
 **コスト最適化:**
+
 - `gpt-4o-mini` 使用（1Mトークン = $0.15）
 - 記事1本あたり約500トークン（入力） + 100トークン（出力） = $0.0001/記事
 - 1日1000記事処理 = 約$0.10/日 = $3/月
@@ -311,6 +324,7 @@ async analyzeArticle(articleId: string) {
 ### C. ユーザー向け機能 (Web UI)
 
 **ページ構成:**
+
 ```
 /                    # ダッシュボード（タイムライン + トランプ指数）
 /article/[id]        # 記事詳細ページ
@@ -324,6 +338,7 @@ async analyzeArticle(articleId: string) {
 #### 1. Live Dashboard (`/`)
 
 **タイムライン形式のニュースフィード:**
+
 - **レイアウト:** 2カラム（左: フィード、右: サイドバー）
 - **実装:** `app/page.tsx`（Server Component）
 - **データ取得:**
@@ -333,7 +348,7 @@ async analyzeArticle(articleId: string) {
     const articles = await prisma.article.findMany({
       orderBy: { publishedAt: 'desc' },
       take: 50,
-      include: { tags: true }
+      include: { tags: true },
     });
     return articles;
   }
@@ -355,8 +370,10 @@ async analyzeArticle(articleId: string) {
   - 新着記事を画面上部にトースト通知 → クリックでタイムラインに追加
 
 **「今日のトランプ指数」グラフ:**
+
 - **実装:** Recharts `LineChart`
 - **データ:** 1時間ごとの感情平均値
+
   ```typescript
   // tRPC endpoint: stats.getTrumpIndex
   async getTrumpIndex({ date }: { date: string }) {
@@ -372,6 +389,7 @@ async analyzeArticle(articleId: string) {
     return hourlyData; // [{ hour: '00:00', avgSentiment: 0.3 }, ...]
   }
   ```
+
 - **表示:** X軸=時刻、Y軸=感情平均値（-1.0 ~ +1.0）
 - **色:** 正=緑グラデーション、負=赤グラデーション
 - **位置:** ダッシュボード右サイドバー上部
@@ -379,6 +397,7 @@ async analyzeArticle(articleId: string) {
 #### 2. Custom Alerts (`/alerts`)
 
 **アラート設定フォーム:**
+
 - **UI:** Shadcn `Form` + React Hook Form
 - **入力項目:**
   - キーワード（例: "裁判", "選挙", "イーロン・マスク"）
@@ -393,6 +412,7 @@ async analyzeArticle(articleId: string) {
 **通知実装:**
 
 **ブラウザプッシュ通知 (Web Push API):**
+
 - **登録フロー:**
   1. ユーザーがアラート設定時にブラウザ通知許可をリクエスト
   2. `navigator.serviceWorker.register('/sw.js')`
@@ -406,6 +426,7 @@ async analyzeArticle(articleId: string) {
      }
      ```
 - **通知送信:** `web-push` npm パッケージ（VAPID認証）
+
   ```typescript
   // NotificationModule
   async sendPushNotification(userId: string, article: Article) {
@@ -425,6 +446,7 @@ async analyzeArticle(articleId: string) {
   ```
 
 **メール通知:**
+
 - **送信:** Resend API（無料枠: 3000通/月）
 - **テンプレート:**
   ```html
@@ -440,27 +462,31 @@ async analyzeArticle(articleId: string) {
   ```
 
 **Discord Webhook:**
+
 - **実装:** `axios.post(webhookUrl, { embeds: [...] })`
 - **埋め込み形式:**
   ```typescript
   {
-    embeds: [{
-      title: article.title,
-      url: article.url,
-      color: impactLevel === 'S' ? 0xFF0000 : 0xFFA500,
-      fields: [
-        { name: 'ソース', value: article.source, inline: true },
-        { name: '感情', value: article.sentiment.toString(), inline: true },
-        { name: 'バイアス', value: article.bias, inline: true }
-      ],
-      description: article.summary.join('\n')
-    }]
+    embeds: [
+      {
+        title: article.title,
+        url: article.url,
+        color: impactLevel === 'S' ? 0xff0000 : 0xffa500,
+        fields: [
+          { name: 'ソース', value: article.source, inline: true },
+          { name: '感情', value: article.sentiment.toString(), inline: true },
+          { name: 'バイアス', value: article.bias, inline: true },
+        ],
+        description: article.summary.join('\n'),
+      },
+    ];
   }
   ```
 
 #### 3. Fact Check Maker (`/fact-check`)
 
 **相反する報道の並列表示:**
+
 - **実装:** 同一トピックの左派・右派記事を並べて表示
 - **マッチングロジック:**
   1. 記事タイトルから主要キーワード抽出（TF-IDFまたはOpenAI embeddings）
@@ -471,6 +497,7 @@ async analyzeArticle(articleId: string) {
   - 各カラムに記事カード
   - 差分をハイライト（感情スコア、キーワードの色分け）
 - **データ取得:**
+
   ```typescript
   // tRPC: factCheck.getComparisons
   async getComparisons() {
@@ -495,6 +522,7 @@ async analyzeArticle(articleId: string) {
 ### パフォーマンス
 
 **目標:**
+
 - Core Web Vitals 全項目で緑色スコア
   - LCP（Largest Contentful Paint）< 2.5秒
   - FID（First Input Delay）< 100ms
@@ -502,6 +530,7 @@ async analyzeArticle(articleId: string) {
 - APIレスポンス < 200ms（95パーセンタイル）
 
 **実装策:**
+
 - **フロントエンド:**
   - Next.js Server Components でHTML先行レンダリング
   - 画像最適化: `next/image` 使用（WebP自動変換、遅延ロード）
@@ -518,6 +547,7 @@ async analyzeArticle(articleId: string) {
 ### 可用性
 
 **クローラーBAN対策:**
+
 - **Proxy使用:** ScraperAPI（`PROXY_URL` 環境変数で設定）
   - IP自動ローテーション
   - レート制限: 各サイト5秒間隔
@@ -535,6 +565,7 @@ async analyzeArticle(articleId: string) {
 - **エラーモニタリング:** Sentry統合（エラー発生時にSlack通知）
 
 **サービス可用性:**
+
 - アップタイム目標: 99.5%（月間3.6時間のダウンタイム許容）
 - ヘルスチェックエンドポイント: `/api/health`
   ```typescript
@@ -550,6 +581,7 @@ async analyzeArticle(articleId: string) {
 ### 拡張性
 
 **マイクロサービス化への準備:**
+
 - NestJS モジュールを疎結合に設計
 - 将来的な分離候補:
   - `CollectorService` → 独立Workerコンテナ
@@ -560,14 +592,17 @@ async analyzeArticle(articleId: string) {
   - Analyzer/Notifier がイベントを購読
 
 **水平スケーリング:**
+
 - RailwayでBackendコンテナを複数起動可能（ステートレス設計）
 - BullMQワーカーもコンテナ追加で並列処理増強
 
 ### 型安全性
 
 **tRPC統合:**
+
 - `packages/shared/trpc/` に全ルーター定義
 - Frontend から完全型付きでAPI呼び出し
+
   ```typescript
   // apps/web/lib/trpc.ts
   import { createTRPCReact } from '@trpc/react-query';
@@ -581,18 +616,24 @@ async analyzeArticle(articleId: string) {
   ```
 
 **Zod バリデーション:**
+
 - 全API入力を Zod スキーマで検証
   ```typescript
   // apps/api/src/article/article.router.ts
   export const articleRouter = router({
     list: publicProcedure
-      .input(z.object({
-        limit: z.number().min(1).max(100),
-        offset: z.number().min(0).optional()
-      }))
+      .input(
+        z.object({
+          limit: z.number().min(1).max(100),
+          offset: z.number().min(0).optional(),
+        })
+      )
       .query(async ({ input }) => {
-        return prisma.article.findMany({ take: input.limit, skip: input.offset });
-      })
+        return prisma.article.findMany({
+          take: input.limit,
+          skip: input.offset,
+        });
+      }),
   });
   ```
 
@@ -740,6 +781,7 @@ model VerificationToken {
 ```
 
 **マイグレーション手順:**
+
 ```bash
 cd packages/database
 pnpm prisma migrate dev --name init
@@ -747,6 +789,7 @@ pnpm prisma generate
 ```
 
 **Seed データ (`prisma/seed.ts`):**
+
 ```typescript
 import { PrismaClient } from '../generated';
 
@@ -755,15 +798,22 @@ const prisma = new PrismaClient();
 async function main() {
   // 初期タグ投入
   const tags = [
-    'Election', 'Trial', 'Tariff', 'Immigration',
-    'Vance', 'Musk', 'Biden', 'DeSantis', 'Policy'
+    'Election',
+    'Trial',
+    'Tariff',
+    'Immigration',
+    'Vance',
+    'Musk',
+    'Biden',
+    'DeSantis',
+    'Policy',
   ];
 
   for (const name of tags) {
     await prisma.tag.upsert({
       where: { name },
       update: {},
-      create: { name }
+      create: { name },
     });
   }
 
@@ -781,9 +831,11 @@ main()
 ```
 
 **実行:**
+
 ```bash
 pnpm prisma db seed
 ```
+
 ## 6. 実装ロードマップ
 
 ### Phase 1 (MVP) - 2週間
@@ -791,6 +843,7 @@ pnpm prisma db seed
 **目標:** 基本的なニュース収集・分析・表示機能を完成させる。
 
 **タスク:**
+
 1. **モノレポ環境構築**
    - Turborepo + pnpm workspace セットアップ
    - `apps/web`, `apps/api`, `packages/database`, `packages/shared` 作成
@@ -843,6 +896,7 @@ pnpm prisma db seed
 **目標:** データ可視化・分析機能を追加。
 
 **タスク:**
+
 1. **トランプ指数グラフ**
    - `stats.getTrumpIndex` tRPC エンドポイント
    - Recharts 統合
@@ -872,6 +926,7 @@ pnpm prisma db seed
 **目標:** ユーザー機能・通知システムを実装。
 
 **タスク:**
+
 1. **認証システム**
    - NextAuth.js セットアップ
    - メール認証（Resend）
@@ -907,6 +962,7 @@ pnpm prisma db seed
 **目標:** UX改善・高度な機能追加。
 
 **タスク:**
+
 1. **Fact Check Maker**
    - 記事マッチングアルゴリズム
    - `/fact-check` ページ実装
@@ -939,11 +995,13 @@ pnpm prisma db seed
 ## 7. 開発開始コマンド
 
 **前提条件:**
+
 - Node.js 20.x インストール済み
 - pnpm インストール済み（`npm install -g pnpm`）
 - PostgreSQL/Redis アクセス情報取得済み（Supabase, Upstash）
 
 **初期セットアップ:**
+
 ```bash
 # 1. Turborepo 初期化
 npx create-turbo@latest
@@ -999,6 +1057,7 @@ pnpm dev
 ```
 
 **一発で全て完了:**
+
 ```bash
 # セットアップスクリプト作成
 # scripts/setup.sh

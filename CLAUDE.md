@@ -59,6 +59,7 @@ The system is designed with loose coupling between three main services:
 ### Database Schema (Prisma)
 
 Core models:
+
 - **Article**: News/posts with AI-generated metadata (summary, sentiment, bias, impactLevel)
 - **Tag**: Keywords for categorization (e.g., "Tariff", "Vance")
 - **User**: User accounts for personalized alerts
@@ -85,6 +86,7 @@ See `.claude/skills/ui-skills/SKILL.md` for complete constraints.
 ## Automated Hooks
 
 After file edits, the system automatically:
+
 1. Runs Prettier formatting
 2. Runs ESLint with auto-fix
 3. Commits changes with message: `chore: auto-format and lint (TypeScript)`
@@ -105,3 +107,5 @@ Hook configuration: `.claude/hooks.json`
 - **Performance:** Green Core Web Vitals scores, API responses <200ms
 - **Availability:** IP rotation (proxy) and User-Agent management to avoid scraper bans
 - **Scalability:** Microservice-ready architecture with service separation
+
+あ
