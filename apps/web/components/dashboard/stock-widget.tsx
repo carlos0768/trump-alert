@@ -55,7 +55,12 @@ export function StockWidget({ stock }: StockWidgetProps) {
           </div>
         </div>
         <p className="mt-2 text-xs text-gray-500">
-          Volume: <span className="tabular-nums">{stock.volume}</span>
+          Volume:{' '}
+          <span className="tabular-nums">
+            {typeof stock.volume === 'number'
+              ? stock.volume.toLocaleString()
+              : stock.volume}
+          </span>
         </p>
       </CardContent>
     </Card>
