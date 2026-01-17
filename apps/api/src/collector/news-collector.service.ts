@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import Parser from 'rss-parser';
 import { createHash } from 'crypto';
 import { PrismaClient } from '@prisma/client';
+import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
 
 const prisma = new PrismaClient();
 const parser = new Parser();
