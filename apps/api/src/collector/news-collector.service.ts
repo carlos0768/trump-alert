@@ -108,12 +108,40 @@ export class NewsCollectorService {
         const article = await this.saveArticle(item, feed);
         if (article) {
           newCount++;
-          // Analyze the new article in the background
-          this.aiAnalyzer.analyzeArticle(article.id).catch((err) => {
-            this.logger.error(
-              `Failed to analyze article ${article.id}: ${err}`
-            );
+
+          // Publish to SSE stream for real-time updates
+          this.streamService.publishArticle({
+            id: article.id,
+            title: article.title,
+            source: article.source,
+            impactLevel: article.impactLevel,
+            sentiment: null,
+            summary: null,
+            publishedAt: article.publishedAt,
           });
+
+          // Analyze the new article in the background
+          this.aiAnalyzer
+            .analyzeArticle(article.id)
+            .then(async (analyzed) => {
+              if (analyzed) {
+                // Check alerts after analysis is complete
+                await this.alertService.checkAndTriggerAlerts({
+                  id: analyzed.id,
+                  title: analyzed.title,
+                  content: analyzed.content,
+                  impactLevel: analyzed.impactLevel,
+                  source: analyzed.source,
+                  sentiment: analyzed.sentiment,
+                  summary: analyzed.summary,
+                });
+              }
+            })
+            .catch((err) => {
+              this.logger.error(
+                `Failed to analyze article ${article.id}: ${err}`
+              );
+            });
         }
       }
     }
