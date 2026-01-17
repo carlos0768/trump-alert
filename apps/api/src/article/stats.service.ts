@@ -1,7 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+interface OperationTotal {
+  operation: string;
+  _sum: {
+    inputTokens: number | null;
+    outputTokens: number | null;
+    cost: number | null;
+  };
+  _count: number;
+}
 
 export interface HourlyData {
   hour: string;
@@ -183,6 +193,188 @@ export class StatsService {
       change: previousPrice ? latestPrice.price - previousPrice.price : 0,
       changePercent: latestPrice.change,
       volume: Number(latestPrice.volume),
+    };
+  }
+
+  async getWeeklyStats() {
+    const days = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+
+      const [articleCount, sentimentData] = await Promise.all([
+        prisma.article.count({
+          where: {
+            publishedAt: { gte: startOfDay, lte: endOfDay },
+          },
+        }),
+        prisma.article.aggregate({
+          where: {
+            publishedAt: { gte: startOfDay, lte: endOfDay },
+            sentiment: { not: null },
+          },
+          _avg: { sentiment: true },
+        }),
+      ]);
+
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      days.push({
+        day: dayNames[new Date(startOfDay).getDay()],
+        date: startOfDay.toISOString().split('T')[0],
+        articles: articleCount,
+        sentiment: sentimentData._avg.sentiment || 0,
+      });
+    }
+
+    return days;
+  }
+
+  async getAnalyticsOverview() {
+    const now = new Date();
+    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(startOfWeek.getDate() - 7);
+
+    const [
+      totalArticles,
+      weeklyArticles,
+      avgSentiment,
+      sourcesCount,
+      sourceDistribution,
+    ] = await Promise.all([
+      // Total articles
+      prisma.article.count(),
+      // This week's articles
+      prisma.article.count({
+        where: { publishedAt: { gte: startOfWeek } },
+      }),
+      // Average sentiment
+      prisma.article.aggregate({
+        where: { sentiment: { not: null } },
+        _avg: { sentiment: true },
+      }),
+      // Unique sources count
+      prisma.article.groupBy({
+        by: ['source'],
+      }),
+      // Source distribution
+      prisma.article.groupBy({
+        by: ['source'],
+        _count: true,
+        orderBy: { _count: { source: 'desc' } },
+      }),
+    ]);
+
+    // Calculate percentages for source distribution
+    const totalForDistribution = sourceDistribution.reduce(
+      (acc, s) => acc + s._count,
+      0
+    );
+    const colors: Record<string, string> = {
+      'Fox News': '#dc2626',
+      CNN: '#3b82f6',
+      BBC: '#6b7280',
+      NPR: '#22c55e',
+      NYT: '#000000',
+      'Truth Social': '#8b5cf6',
+    };
+
+    const distribution = sourceDistribution.map((s) => ({
+      name: s.source,
+      value: Math.round((s._count / totalForDistribution) * 100),
+      count: s._count,
+      color: colors[s.source] || '#9ca3af',
+    }));
+
+    return {
+      totalArticles,
+      weeklyArticles,
+      avgSentiment: avgSentiment._avg.sentiment || 0,
+      sourcesTracked: sourcesCount.length,
+      sourceDistribution: distribution,
+    };
+  }
+
+  async getApiUsageStats() {
+    const today = new Date();
+    const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const [todayStats, monthStats, byOperation, recentUsage] =
+      await Promise.all([
+        // Today's totals
+        prisma.apiUsage.aggregate({
+          where: { createdAt: { gte: startOfToday } },
+          _sum: {
+            inputTokens: true,
+            outputTokens: true,
+            cost: true,
+          },
+          _count: true,
+        }),
+        // Month's totals
+        prisma.apiUsage.aggregate({
+          where: { createdAt: { gte: startOfMonth } },
+          _sum: {
+            inputTokens: true,
+            outputTokens: true,
+            cost: true,
+          },
+          _count: true,
+        }),
+        // Breakdown by operation
+        prisma.apiUsage.groupBy({
+          by: ['operation'],
+          _sum: {
+            inputTokens: true,
+            outputTokens: true,
+            cost: true,
+          },
+          _count: true,
+          orderBy: { _sum: { cost: 'desc' } },
+        }),
+        // Recent usage entries
+        prisma.apiUsage.findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+          select: {
+            id: true,
+            provider: true,
+            model: true,
+            operation: true,
+            inputTokens: true,
+            outputTokens: true,
+            cost: true,
+            createdAt: true,
+          },
+        }),
+      ]);
+
+    return {
+      today: {
+        calls: todayStats._count,
+        inputTokens: todayStats._sum.inputTokens || 0,
+        outputTokens: todayStats._sum.outputTokens || 0,
+        cost: todayStats._sum.cost || 0,
+      },
+      month: {
+        calls: monthStats._count,
+        inputTokens: monthStats._sum.inputTokens || 0,
+        outputTokens: monthStats._sum.outputTokens || 0,
+        cost: monthStats._sum.cost || 0,
+      },
+      byOperation: (byOperation as OperationTotal[]).map((op) => ({
+        operation: op.operation,
+        calls: op._count,
+        inputTokens: op._sum.inputTokens || 0,
+        outputTokens: op._sum.outputTokens || 0,
+        cost: op._sum.cost || 0,
+      })),
+      recentUsage,
     };
   }
 }

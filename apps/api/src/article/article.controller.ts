@@ -83,6 +83,11 @@ export class ArticleController {
     return this.statsService.getStockData();
   }
 
+  @Get('stats/api-usage')
+  async getApiUsageStats() {
+    return this.statsService.getApiUsageStats();
+  }
+
   @Post('collect')
   async triggerCollection() {
     return this.newsCollector.triggerCollection();

@@ -73,6 +73,26 @@ export interface AnalysisResult {
   impactLevel: 'S' | 'A' | 'B' | 'C';
 }
 
+// GPT-4o-mini pricing (per 1M tokens)
+const PRICING = {
+  'gpt-4o-mini': {
+    input: 0.15, // $0.15 per 1M input tokens
+    output: 0.6, // $0.60 per 1M output tokens
+  },
+};
+
+function calculateCost(
+  model: string,
+  inputTokens: number,
+  outputTokens: number
+): number {
+  const pricing =
+    PRICING[model as keyof typeof PRICING] || PRICING['gpt-4o-mini'];
+  return (
+    (inputTokens * pricing.input + outputTokens * pricing.output) / 1_000_000
+  );
+}
+
 @Injectable()
 export class AIAnalyzerService {
   private readonly logger = new Logger(AIAnalyzerService.name);
@@ -83,6 +103,31 @@ export class AIAnalyzerService {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+  }
+
+  private async trackUsage(
+    operation: string,
+    model: string,
+    inputTokens: number,
+    outputTokens: number,
+    articleId?: string
+  ): Promise<void> {
+    try {
+      const cost = calculateCost(model, inputTokens, outputTokens);
+      await prisma.apiUsage.create({
+        data: {
+          provider: 'openai',
+          model,
+          operation,
+          inputTokens,
+          outputTokens,
+          cost,
+          articleId,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to track API usage: ${error}`);
+    }
   }
 
   async analyzeArticle(articleId: string): Promise<AnalysisResult | null> {
@@ -101,15 +146,16 @@ export class AIAnalyzerService {
       // First, translate to Japanese
       const { titleJa, contentJa } = await this.translateToJapanese(
         article.title,
-        article.content
+        article.content,
+        articleId
       );
 
       // Then run all analyses in parallel
       const [summary, sentiment, bias, impactLevel] = await Promise.all([
-        this.getSummary(article.title, article.content),
-        this.getSentiment(article.content),
-        this.getBias(article.content),
-        this.getImpact(article.title),
+        this.getSummary(article.title, article.content, articleId),
+        this.getSentiment(article.content, articleId),
+        this.getBias(article.content, articleId),
+        this.getImpact(article.title, articleId),
       ]);
 
       const result: AnalysisResult = {
@@ -159,7 +205,8 @@ export class AIAnalyzerService {
 
   private async translateToJapanese(
     title: string,
-    content: string
+    content: string,
+    articleId?: string
   ): Promise<{ titleJa: string; contentJa: string }> {
     const prompt = fillPrompt(TRANSLATE_PROMPT, {
       title,
@@ -174,6 +221,17 @@ export class AIAnalyzerService {
           response_format: { type: 'json_object' },
           max_tokens: 2000,
         });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'translate',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
 
         const result = JSON.parse(response.choices[0].message.content || '{}');
         if (result.titleJa && result.contentJa) {
@@ -192,7 +250,11 @@ export class AIAnalyzerService {
     return { titleJa: title, contentJa: content };
   }
 
-  private async getSummary(title: string, content: string): Promise<string[]> {
+  private async getSummary(
+    title: string,
+    content: string,
+    articleId?: string
+  ): Promise<string[]> {
     const prompt = fillPrompt(SUMMARIZE_PROMPT, {
       title,
       content: content.substring(0, 2000),
@@ -207,6 +269,17 @@ export class AIAnalyzerService {
           max_tokens: 300,
         });
 
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'summarize',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
+
         const result = JSON.parse(response.choices[0].message.content || '{}');
         if (Array.isArray(result.summary) && result.summary.length === 3) {
           return result.summary;
@@ -220,7 +293,10 @@ export class AIAnalyzerService {
     return ['要約を取得できませんでした', 'AI分析中です', '後でご確認ください'];
   }
 
-  private async getSentiment(content: string): Promise<number> {
+  private async getSentiment(
+    content: string,
+    articleId?: string
+  ): Promise<number> {
     const prompt = fillPrompt(SENTIMENT_PROMPT, {
       content: content.substring(0, 2000),
     });
@@ -233,6 +309,17 @@ export class AIAnalyzerService {
           response_format: { type: 'json_object' },
           max_tokens: 50,
         });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'sentiment',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
 
         const result = JSON.parse(response.choices[0].message.content || '{}');
         if (typeof result.sentiment === 'number') {
@@ -247,7 +334,10 @@ export class AIAnalyzerService {
     return 0; // Neutral default
   }
 
-  private async getBias(content: string): Promise<'Left' | 'Center' | 'Right'> {
+  private async getBias(
+    content: string,
+    articleId?: string
+  ): Promise<'Left' | 'Center' | 'Right'> {
     const prompt = fillPrompt(BIAS_PROMPT, {
       content: content.substring(0, 2000),
     });
@@ -260,6 +350,17 @@ export class AIAnalyzerService {
           response_format: { type: 'json_object' },
           max_tokens: 50,
         });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'bias',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
 
         const result = JSON.parse(response.choices[0].message.content || '{}');
         if (['Left', 'Center', 'Right'].includes(result.bias)) {
@@ -274,7 +375,10 @@ export class AIAnalyzerService {
     return 'Center'; // Default
   }
 
-  private async getImpact(title: string): Promise<'S' | 'A' | 'B' | 'C'> {
+  private async getImpact(
+    title: string,
+    articleId?: string
+  ): Promise<'S' | 'A' | 'B' | 'C'> {
     const prompt = fillPrompt(IMPACT_PROMPT, { title });
 
     for (let attempt = 0; attempt < this.maxRetries; attempt++) {
@@ -285,6 +389,17 @@ export class AIAnalyzerService {
           response_format: { type: 'json_object' },
           max_tokens: 50,
         });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'impact',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
 
         const result = JSON.parse(response.choices[0].message.content || '{}');
         if (['S', 'A', 'B', 'C'].includes(result.impactLevel)) {
