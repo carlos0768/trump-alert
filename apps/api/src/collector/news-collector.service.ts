@@ -25,7 +25,11 @@ export class NewsCollectorService {
 
   constructor(
     @Inject(forwardRef(() => AIAnalyzerService))
-    private readonly aiAnalyzer: AIAnalyzerService
+    private readonly aiAnalyzer: AIAnalyzerService,
+    @Inject(forwardRef(() => StreamService))
+    private readonly streamService: StreamService,
+    @Inject(forwardRef(() => AlertService))
+    private readonly alertService: AlertService
   ) {}
 
   private readonly RSS_FEEDS = [
