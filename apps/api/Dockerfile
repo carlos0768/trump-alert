@@ -25,8 +25,8 @@ COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
 COPY packages/database ./packages/database
 
-# Generate Prisma client
-RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
+# Generate Prisma client (use specific version matching package.json)
+RUN npx prisma@5.22.0 generate --schema=packages/database/prisma/schema.prisma
 
 # Build
 RUN pnpm --filter @trump-alert/api build
