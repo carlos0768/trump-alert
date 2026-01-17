@@ -16,17 +16,6 @@ export interface User {
   discordWebhook: string | null;
 }
 
-export interface Alert {
-  id: string;
-  keyword: string;
-  minImpact: 'S' | 'A' | 'B' | 'C';
-  notifyPush: boolean;
-  notifyEmail: boolean;
-  notifyDiscord: boolean;
-  isActive: boolean;
-  createdAt: string;
-}
-
 interface AuthState {
   user: User | null;
   isLoading: boolean;
