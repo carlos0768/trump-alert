@@ -167,12 +167,16 @@ export class AIAnalyzerService {
       );
 
       // Then run all analyses in parallel
-      const [summary, sentiment, bias, impactLevel] = await Promise.all([
+      const [summary, sentiment, bias, impactLevel, tags] = await Promise.all([
         this.getSummary(article.title, article.content, articleId),
         this.getSentiment(article.content, articleId),
         this.getBias(article.content, articleId),
         this.getImpact(article.title, articleId),
+        this.getTags(article.title, article.content, articleId),
       ]);
+
+      // Save tags to database
+      await this.saveTags(articleId, tags);
 
       const result: AnalysisResult = {
         id: articleId,
