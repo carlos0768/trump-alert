@@ -1,16 +1,11 @@
 'use client';
 
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 
 export function Header() {
   return (
-    <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 lg:px-6">
-      {/* Mobile menu button */}
-      <button className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 lg:hidden">
-        <Menu className="size-5" />
-      </button>
-
+    <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 pl-16 lg:px-6 lg:pl-6">
       {/* Search */}
       <div className="flex flex-1 items-center justify-center px-4 lg:justify-start">
         <div className="relative w-full max-w-md">
