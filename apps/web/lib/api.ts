@@ -32,8 +32,10 @@ export interface ArticlesResponse {
 }
 
 export interface TrumpIndexData {
-  hour: string;
-  avgSentiment: number;
+  hour?: string;
+  time?: string;
+  avgSentiment?: number;
+  sentiment?: number;
   articleCount: number;
 }
 

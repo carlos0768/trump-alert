@@ -46,8 +46,10 @@ export default function DashboardPage() {
     trumpIndexData && trumpIndexData.length > 0
       ? trumpIndexData
       : mockTrumpIndexData;
-  const currentIndex = indexData[indexData.length - 1]?.sentiment ?? 0;
-  const previousIndex = indexData[indexData.length - 2]?.sentiment ?? 0;
+  const getSentiment = (item: (typeof indexData)[number] | undefined) =>
+    item?.sentiment ?? item?.avgSentiment ?? 0;
+  const currentIndex = getSentiment(indexData[indexData.length - 1]);
+  const previousIndex = getSentiment(indexData[indexData.length - 2]);
   const indexChange = currentIndex - previousIndex;
 
   // Stock data with fallback
