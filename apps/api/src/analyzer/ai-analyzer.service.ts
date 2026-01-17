@@ -54,6 +54,18 @@ const IMPACT_PROMPT = `
 JSON形式: { "impactLevel": "A" }
 `;
 
+const TAGS_PROMPT = `
+以下のニュース記事から、主要なトピックタグを3〜5個抽出してください。
+タグは英語の単語またはフレーズで、スペースなしのPascalCaseで返してください。
+
+一般的なトピック例: Tariff, Immigration, Election, Trial, Economy, China, Border, Rally, Indictment, TruthSocial, Vance, DJTStock
+
+記事タイトル: {title}
+本文: {content}
+
+JSON形式: { "tags": ["Tariff", "China", "Economy"] }
+`;
+
 function fillPrompt(template: string, values: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(values)) {
