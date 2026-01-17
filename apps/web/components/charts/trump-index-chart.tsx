@@ -94,7 +94,7 @@ export function TrumpIndexChart({
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={data}
+              data={normalizedData}
               margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
             >
               <defs>
