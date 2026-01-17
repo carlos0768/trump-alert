@@ -150,7 +150,9 @@ export const mockArticles: Article[] = [
   },
 ];
 
-export const mockTrumpIndexData = [
+import type { TrumpIndexData } from './api';
+
+export const mockTrumpIndexData: TrumpIndexData[] = [
   { time: '00:00', sentiment: 0.12, articleCount: 15 },
   { time: '02:00', sentiment: 0.08, articleCount: 8 },
   { time: '04:00', sentiment: -0.05, articleCount: 5 },
