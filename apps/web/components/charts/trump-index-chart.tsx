@@ -148,7 +148,7 @@ export function TrumpIndexChart({
               <Tooltip
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
-                    const data = payload[0].payload as TrumpIndexDataPoint;
+                    const data = payload[0].payload as NormalizedDataPoint;
                     return (
                       <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
                         <p className="text-xs text-gray-500">{data.time}</p>
