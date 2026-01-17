@@ -102,6 +102,12 @@ export class NewsCollectorService {
         const article = await this.saveArticle(item, feed);
         if (article) {
           newCount++;
+          // Analyze the new article in the background
+          this.aiAnalyzer.analyzeArticle(article.id).catch((err) => {
+            this.logger.error(
+              `Failed to analyze article ${article.id}: ${err}`
+            );
+          });
         }
       }
     }
