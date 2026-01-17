@@ -96,7 +96,8 @@ export class FactCheckService {
     >();
 
     for (const article of recentArticlesWithTags) {
-      for (const tag of article.tags) {
+      for (const articleTag of article.tags) {
+        const tag = articleTag.tag;
         if (!tagGroups.has(tag.id)) {
           tagGroups.set(tag.id, {
             tagName: tag.name,
