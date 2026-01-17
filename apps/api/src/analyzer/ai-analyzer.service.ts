@@ -65,6 +65,10 @@ function fillPrompt(template: string, values: Record<string, string>): string {
 const prisma = new PrismaClient();
 
 export interface AnalysisResult {
+  id: string;
+  title: string;
+  content: string;
+  source: string;
   titleJa: string;
   contentJa: string;
   summary: string[];

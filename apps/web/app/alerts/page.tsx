@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Bell,
   Plus,
@@ -10,6 +11,7 @@ import {
   MessageSquare,
   ToggleLeft,
   ToggleRight,
+  LogIn,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,99 +23,100 @@ import {
 } from '@/components/ui/card';
 import { Badge, ImpactBadge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-
-interface Alert {
-  id: string;
-  keyword: string;
-  minImpact: 'S' | 'A' | 'B' | 'C';
-  notifyPush: boolean;
-  notifyEmail: boolean;
-  notifyDiscord: boolean;
-  isActive: boolean;
-  matchCount: number;
-}
-
-const mockAlerts: Alert[] = [
-  {
-    id: '1',
-    keyword: 'Tariff',
-    minImpact: 'A',
-    notifyPush: true,
-    notifyEmail: true,
-    notifyDiscord: false,
-    isActive: true,
-    matchCount: 45,
-  },
-  {
-    id: '2',
-    keyword: 'Indictment',
-    minImpact: 'S',
-    notifyPush: true,
-    notifyEmail: true,
-    notifyDiscord: true,
-    isActive: true,
-    matchCount: 23,
-  },
-  {
-    id: '3',
-    keyword: 'Election',
-    minImpact: 'B',
-    notifyPush: true,
-    notifyEmail: false,
-    notifyDiscord: false,
-    isActive: false,
-    matchCount: 156,
-  },
-];
+import { useAuth } from '@/lib/hooks/use-auth';
+import { useAlerts, type CreateAlertInput } from '@/lib/hooks/use-alerts';
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    alerts,
+    isLoading: alertsLoading,
+    createAlert,
+    updateAlert,
+    deleteAlert,
+    isCreating,
+  } = useAlerts();
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newKeyword, setNewKeyword] = useState('');
   const [newMinImpact, setNewMinImpact] = useState<'S' | 'A' | 'B' | 'C'>('A');
+  const [newNotifyPush, setNewNotifyPush] = useState(true);
+  const [newNotifyEmail, setNewNotifyEmail] = useState(false);
+  const [newNotifyDiscord, setNewNotifyDiscord] = useState(false);
 
-  const toggleAlert = (id: string) => {
-    setAlerts(
-      alerts.map((alert) =>
-        alert.id === id ? { ...alert, isActive: !alert.isActive } : alert
-      )
-    );
+  const toggleAlertActive = (id: string, currentActive: boolean) => {
+    updateAlert(id, { isActive: !currentActive });
   };
 
-  const deleteAlert = (id: string) => {
-    setAlerts(alerts.filter((alert) => alert.id !== id));
+  const handleDeleteAlert = (id: string) => {
+    if (confirm('このアラートを削除しますか？')) {
+      deleteAlert(id);
+    }
   };
 
-  const createAlert = () => {
+  const handleCreateAlert = () => {
     if (!newKeyword.trim()) return;
-    const newAlert: Alert = {
-      id: Date.now().toString(),
-      keyword: newKeyword,
+
+    const alertData: CreateAlertInput = {
+      keyword: newKeyword.trim(),
       minImpact: newMinImpact,
-      notifyPush: true,
-      notifyEmail: false,
-      notifyDiscord: false,
-      isActive: true,
-      matchCount: 0,
+      notifyPush: newNotifyPush,
+      notifyEmail: newNotifyEmail,
+      notifyDiscord: newNotifyDiscord,
     };
-    setAlerts([newAlert, ...alerts]);
-    setNewKeyword('');
-    setShowCreateForm(false);
+
+    createAlert(alertData, {
+      onSuccess: () => {
+        setNewKeyword('');
+        setShowCreateForm(false);
+      },
+    });
   };
+
+  // Show login prompt if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <Card className="py-12 text-center">
+          <LogIn className="mx-auto size-16 text-gray-300" />
+          <h2 className="mt-4 text-xl font-semibold text-gray-900">
+            ログインが必要です
+          </h2>
+          <p className="mt-2 text-gray-500">
+            アラート機能を使用するにはログインしてください
+          </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <Link href="/auth/signin">
+              <Button>ログイン</Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button variant="outline">新規登録</Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const isLoading = authLoading || alertsLoading;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Custom Alerts</h1>
+          <h1 className="text-2xl font-bold text-gray-900">カスタムアラート</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Get notified when news matches your keywords
+            キーワードにマッチするニュースが届いたら通知を受け取る
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm(true)} className="gap-2">
+        <Button
+          onClick={() => setShowCreateForm(true)}
+          className="gap-2"
+          disabled={isLoading}
+        >
           <Plus className="size-4" />
-          New Alert
+          新規アラート
         </Button>
       </div>
 
@@ -121,29 +124,29 @@ export default function AlertsPage() {
       {showCreateForm && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-lg">Create New Alert</CardTitle>
+            <CardTitle className="text-lg">新規アラートを作成</CardTitle>
             <CardDescription>
-              Set up a keyword to monitor and choose your notification
-              preferences
+              監視するキーワードと通知方法を設定
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Keyword
+                  キーワード
                 </label>
                 <input
                   type="text"
                   value={newKeyword}
                   onChange={(e) => setNewKeyword(e.target.value)}
-                  placeholder="e.g., Tariff, Election, Trial"
+                  placeholder="例: Tariff, Election, Trial"
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
               </div>
+
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Minimum Impact Level
+                  最低インパクトレベル
                 </label>
                 <div className="flex gap-2">
                   {(['S', 'A', 'B', 'C'] as const).map((level) => (
@@ -168,17 +171,64 @@ export default function AlertsPage() {
                   ))}
                 </div>
                 <p className="mt-1.5 text-xs text-gray-500">
-                  You will receive alerts for {newMinImpact} level and above
+                  {newMinImpact}レベル以上の記事で通知を受け取ります
                 </p>
               </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  通知方法
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setNewNotifyPush(!newNotifyPush)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                      newNotifyPush
+                        ? 'border-primary-500 bg-primary-50 text-primary-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    )}
+                  >
+                    <Smartphone className="size-4" />
+                    プッシュ通知
+                  </button>
+                  <button
+                    onClick={() => setNewNotifyEmail(!newNotifyEmail)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                      newNotifyEmail
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    )}
+                  >
+                    <Mail className="size-4" />
+                    メール
+                  </button>
+                  <button
+                    onClick={() => setNewNotifyDiscord(!newNotifyDiscord)}
+                    className={cn(
+                      'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                      newNotifyDiscord
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    )}
+                  >
+                    <MessageSquare className="size-4" />
+                    Discord
+                  </button>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setShowCreateForm(false)}
                 >
-                  Cancel
+                  キャンセル
                 </Button>
-                <Button onClick={createAlert}>Create Alert</Button>
+                <Button onClick={handleCreateAlert} disabled={isCreating}>
+                  {isCreating ? '作成中...' : 'アラートを作成'}
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -187,16 +237,21 @@ export default function AlertsPage() {
 
       {/* Alerts List */}
       <div className="mt-6 space-y-3">
-        {alerts.length === 0 ? (
+        {isLoading ? (
+          <Card className="py-12 text-center">
+            <div className="mx-auto size-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+            <p className="mt-4 text-gray-500">読み込み中...</p>
+          </Card>
+        ) : alerts.length === 0 ? (
           <Card className="py-12 text-center">
             <Bell className="mx-auto size-12 text-gray-300" />
-            <p className="mt-4 text-gray-500">No alerts configured</p>
+            <p className="mt-4 text-gray-500">アラートが設定されていません</p>
             <Button
               variant="outline"
               className="mt-4"
               onClick={() => setShowCreateForm(true)}
             >
-              Create your first alert
+              最初のアラートを作成
             </Button>
           </Card>
         ) : (
@@ -212,7 +267,9 @@ export default function AlertsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => toggleAlert(alert.id)}
+                      onClick={() =>
+                        toggleAlertActive(alert.id, alert.isActive)
+                      }
                       className={cn(
                         'transition-colors',
                         alert.isActive ? 'text-primary-600' : 'text-gray-400'
@@ -231,20 +288,20 @@ export default function AlertsPage() {
                         </span>
                         <ImpactBadge level={alert.minImpact} />
                         <Badge variant="secondary">
-                          {alert.matchCount} matches
+                          {alert.isActive ? '有効' : '無効'}
                         </Badge>
                       </div>
                       <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
                         {alert.notifyPush && (
                           <span className="flex items-center gap-1">
                             <Smartphone className="size-3.5" />
-                            Push
+                            プッシュ
                           </span>
                         )}
                         {alert.notifyEmail && (
                           <span className="flex items-center gap-1">
                             <Mail className="size-3.5" />
-                            Email
+                            メール
                           </span>
                         )}
                         {alert.notifyDiscord && (
@@ -259,7 +316,7 @@ export default function AlertsPage() {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    onClick={() => deleteAlert(alert.id)}
+                    onClick={() => handleDeleteAlert(alert.id)}
                     className="text-gray-400 hover:text-red-500"
                   >
                     <Trash2 className="size-4" />
@@ -274,10 +331,8 @@ export default function AlertsPage() {
       {/* Notification Settings */}
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle className="text-lg">Notification Settings</CardTitle>
-          <CardDescription>
-            Configure how you want to receive alerts
-          </CardDescription>
+          <CardTitle className="text-lg">通知設定</CardTitle>
+          <CardDescription>アラートの受信方法を設定</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -287,16 +342,14 @@ export default function AlertsPage() {
                   <Smartphone className="size-5 text-primary-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">
-                    Push Notifications
-                  </p>
+                  <p className="font-medium text-gray-900">プッシュ通知</p>
                   <p className="text-sm text-gray-500">
-                    Receive browser push notifications
+                    ブラウザのプッシュ通知を受け取る
                   </p>
                 </div>
               </div>
               <Button variant="outline" size="sm">
-                Enable
+                有効化
               </Button>
             </div>
 
@@ -306,17 +359,15 @@ export default function AlertsPage() {
                   <Mail className="size-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">
-                    Email Notifications
-                  </p>
+                  <p className="font-medium text-gray-900">メール通知</p>
                   <p className="text-sm text-gray-500">
-                    Receive alerts via email
+                    {user?.email || 'メールアドレス未設定'}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                Configure
-              </Button>
+              <Badge variant="secondary">
+                {user?.emailVerified ? '認証済み' : '未認証'}
+              </Badge>
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
@@ -327,12 +378,14 @@ export default function AlertsPage() {
                 <div>
                   <p className="font-medium text-gray-900">Discord Webhook</p>
                   <p className="text-sm text-gray-500">
-                    Send alerts to a Discord channel
+                    {user?.discordWebhook
+                      ? '設定済み'
+                      : 'Discordチャンネルに通知を送信'}
                   </p>
                 </div>
               </div>
               <Button variant="outline" size="sm">
-                Connect
+                {user?.discordWebhook ? '変更' : '接続'}
               </Button>
             </div>
           </div>
