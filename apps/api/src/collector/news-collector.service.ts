@@ -21,6 +21,11 @@ interface RSSItem {
 export class NewsCollectorService {
   private readonly logger = new Logger(NewsCollectorService.name);
 
+  constructor(
+    @Inject(forwardRef(() => AIAnalyzerService))
+    private readonly aiAnalyzer: AIAnalyzerService
+  ) {}
+
   private readonly RSS_FEEDS = [
     {
       url: 'http://rss.cnn.com/rss/cnn_allpolitics.rss',
