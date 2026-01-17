@@ -29,7 +29,6 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
   getCurrentSubscription,
-  saveSubscriptionToServer,
 } from '@/lib/push-notifications';
 import { useAuth } from '@/lib/hooks/use-auth';
 import Link from 'next/link';

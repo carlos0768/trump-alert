@@ -16,7 +16,6 @@ import {
 } from 'recharts';
 import {
   TrendingUp,
-  TrendingDown,
   Newspaper,
   BarChart3,
   Activity,
@@ -38,8 +37,7 @@ import {
 export default function AnalyticsPage() {
   const { data: weeklyData, isLoading: weeklyLoading } = useWeeklyStats();
   const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview();
-  const { data: trendingTopics, isLoading: topicsLoading } =
-    useTrendingTopics();
+  const { data: trendingTopics } = useTrendingTopics();
 
   const isLoading = weeklyLoading || overviewLoading;
 

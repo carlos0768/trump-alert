@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ImpactBadge, BiasBadge, SentimentBadge } from '@/components/ui/badge';
 import { useArticle, useRelatedArticles } from '@/lib/hooks';
-import { formatRelativeTime, formatNumber } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/utils';
 
 interface ArticlePageProps {
   params: Promise<{ id: string }>;

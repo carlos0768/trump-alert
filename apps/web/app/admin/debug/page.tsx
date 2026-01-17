@@ -110,7 +110,7 @@ export default function DebugPage() {
       const result = await res.json();
       alert(`分析完了: ${result.analyzed}件成功, ${result.failed}件失敗`);
       fetchData();
-    } catch (error) {
+    } catch {
       alert('分析に失敗しました');
     }
     setAnalyzing(false);
@@ -123,7 +123,7 @@ export default function DebugPage() {
       const result = await res.json();
       alert(`収集完了: ${result.collected}件の新規記事`);
       fetchData();
-    } catch (error) {
+    } catch {
       alert('収集に失敗しました');
     }
     setCollecting(false);
