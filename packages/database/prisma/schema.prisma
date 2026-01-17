@@ -144,3 +144,20 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+// API Usage Tracking
+model ApiUsage {
+  id           String   @id @default(uuid())
+  provider     String   // "openai", "anthropic", etc.
+  model        String   // "gpt-4o-mini", "claude-3-haiku", etc.
+  operation    String   // "translate", "summarize", "sentiment", "bias", "impact"
+  inputTokens  Int
+  outputTokens Int
+  cost         Float    // Cost in USD
+  articleId    String?
+  createdAt    DateTime @default(now())
+
+  @@index([provider])
+  @@index([createdAt(sort: Desc)])
+  @@index([operation])
+}
