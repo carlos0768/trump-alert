@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Zap, RefreshCw, Loader2 } from 'lucide-react';
 import { ArticleCard } from '@/components/article';
 import { TrumpIndexChart, type TrumpIndexDataPoint } from '@/components/charts';
@@ -10,6 +10,7 @@ import {
   StockWidget,
   FilterBar,
 } from '@/components/dashboard';
+import { ExecutiveOrderWidget } from '@/components/executive-order';
 import { Button } from '@/components/ui/button';
 import {
   useArticles,
@@ -19,9 +20,43 @@ import {
 } from '@/lib/hooks';
 import { mockTrumpIndexData } from '@/lib/mock-data';
 import type { ArticleFilters } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState<ArticleFilters>({});
+  const [isFeedHeaderVisible, setIsFeedHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle scroll to hide/show feed header on mobile
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const currentScrollY = container.scrollTop;
+      const scrollDelta = currentScrollY - lastScrollY.current;
+
+      // Only hide/show on mobile (lg breakpoint = 1024px)
+      if (window.innerWidth < 1024) {
+        // Scrolling down more than 10px -> hide
+        if (scrollDelta > 10 && currentScrollY > 60) {
+          setIsFeedHeaderVisible(false);
+        }
+        // Scrolling up more than 10px -> show
+        else if (scrollDelta < -10) {
+          setIsFeedHeaderVisible(true);
+        }
+      } else {
+        setIsFeedHeaderVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Fetch real data from API with filters
   const {
@@ -86,9 +121,17 @@ export default function DashboardPage() {
   return (
     <div className="flex h-full">
       {/* Main Feed */}
-      <div className="flex-1 overflow-y-auto border-r border-gray-200">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto border-r border-gray-200"
+      >
         {/* Feed Header */}
-        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm">
+        <div
+          className={cn(
+            'sticky top-0 z-10 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm transition-transform duration-300 lg:translate-y-0',
+            isFeedHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+          )}
+        >
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-gray-900">Live Feed</h1>
@@ -179,6 +222,9 @@ export default function DashboardPage() {
           ) : (
             <StockWidget stock={stock} />
           )}
+
+          {/* Executive Orders Widget */}
+          <ExecutiveOrderWidget />
 
           {/* Trending Topics */}
           {topicsLoading ? (

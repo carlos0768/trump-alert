@@ -10,6 +10,8 @@ import { AlertModule } from './alert/alert.module';
 import { NotificationModule } from './notification/notification.module';
 import { AuthModule } from './auth/auth.module';
 import { StreamModule } from './stream/stream.module';
+import { StorylineModule } from './storyline/storyline.module';
+import { ExecutiveOrderModule } from './executive-order/executive-order.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { StreamModule } from './stream/stream.module';
     NotificationModule,
     AuthModule,
     StreamModule,
+    StorylineModule,
+    ExecutiveOrderModule,
   ],
 })
 export class AppModule {}

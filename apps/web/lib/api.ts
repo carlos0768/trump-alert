@@ -307,3 +307,192 @@ export async function fetchComparisonByTopic(
 
   return data;
 }
+
+// Storyline types
+export interface StorylineArticle {
+  id: string;
+  title: string;
+  titleJa?: string;
+  source: string;
+  publishedAt: string;
+  impactLevel: string;
+  summary: string[];
+}
+
+export interface StorylineEvent {
+  date: string;
+  isKeyEvent: boolean;
+  article: StorylineArticle;
+}
+
+export interface Storyline {
+  id: string;
+  title: string;
+  titleJa?: string;
+  description: string;
+  descriptionJa?: string;
+  status: 'ongoing' | 'resolved' | 'developing';
+  category?: string;
+  summary?: string;
+  summaryJa?: string;
+  firstEventAt: string;
+  lastEventAt: string;
+  eventCount: number;
+  articles?: Array<{
+    articleId: string;
+    addedAt: string;
+    isKeyEvent: boolean;
+    article: StorylineArticle;
+  }>;
+}
+
+export interface StorylineUpdate {
+  id: string;
+  title: string;
+  titleJa?: string;
+  status: string;
+  lastEventAt: string;
+  articles: Array<{
+    article: {
+      id: string;
+      title: string;
+      titleJa?: string;
+      source: string;
+      publishedAt: string;
+    };
+  }>;
+}
+
+// Fetch all storylines
+export async function fetchStorylines(status?: string): Promise<Storyline[]> {
+  const params = status ? `?status=${status}` : '';
+  const res = await fetch(`${API_URL}/api/storylines${params}`, {
+    next: { revalidate: 60 },
+  });
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const data = await res.json();
+  return data.storylines || [];
+}
+
+// Fetch single storyline with timeline
+export async function fetchStorylineTimeline(
+  id: string
+): Promise<{ storyline: Storyline; timeline: StorylineEvent[] } | null> {
+  const res = await fetch(`${API_URL}/api/storylines/${id}/timeline`, {
+    next: { revalidate: 60 },
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  return res.json();
+}
+
+// Fetch recent storyline updates (for home feed)
+export async function fetchRecentStorylineUpdates(
+  limit = 5
+): Promise<StorylineUpdate[]> {
+  const res = await fetch(
+    `${API_URL}/api/storylines/recent-updates?limit=${limit}`,
+    {
+      next: { revalidate: 60 },
+    }
+  );
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const data = await res.json();
+  return data.updates || [];
+}
+
+// Executive Order types
+export interface ExecutiveOrder {
+  id: string;
+  documentNumber: string;
+  executiveOrderNumber: number | null;
+  type: 'executive_order' | 'proclamation' | 'memorandum' | 'other';
+  title: string;
+  titleJa: string | null;
+  abstract: string | null;
+  summaryJa: string | null;
+  signingDate: string;
+  publicationDate: string;
+  htmlUrl: string;
+  pdfUrl: string | null;
+  president: string;
+}
+
+export interface ExecutiveOrdersResponse {
+  orders: ExecutiveOrder[];
+  total: number;
+  hasMore: boolean;
+}
+
+// Fetch executive orders
+export async function fetchExecutiveOrders(
+  type?: string,
+  limit = 20,
+  offset = 0
+): Promise<ExecutiveOrdersResponse> {
+  const params = new URLSearchParams();
+  params.set('limit', limit.toString());
+  params.set('offset', offset.toString());
+  if (type) {
+    params.set('type', type);
+  }
+
+  const res = await fetch(
+    `${API_URL}/api/executive-orders?${params.toString()}`,
+    {
+      next: { revalidate: 60 },
+    }
+  );
+
+  if (!res.ok) {
+    return { orders: [], total: 0, hasMore: false };
+  }
+
+  return res.json();
+}
+
+// Fetch recent executive orders (for sidebar widget)
+export async function fetchRecentExecutiveOrders(
+  limit = 5
+): Promise<ExecutiveOrder[]> {
+  const res = await fetch(
+    `${API_URL}/api/executive-orders/recent?limit=${limit}`,
+    {
+      next: { revalidate: 60 },
+    }
+  );
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const data = await res.json();
+  return data.orders || [];
+}
+
+// Fetch single executive order
+export async function fetchExecutiveOrder(
+  id: string
+): Promise<ExecutiveOrder | null> {
+  const res = await fetch(`${API_URL}/api/executive-orders/${id}`, {
+    next: { revalidate: 60 },
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const data = await res.json();
+  return data.order || null;
+}

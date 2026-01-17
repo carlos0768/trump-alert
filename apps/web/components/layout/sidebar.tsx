@@ -12,11 +12,15 @@ import {
   TrendingUp,
   X,
   Menu,
+  BookOpen,
+  FileSignature,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Storylines', href: '/storylines', icon: BookOpen },
+  { name: 'Legislation', href: '/legislation', icon: FileSignature },
   { name: 'Alerts', href: '/alerts', icon: Bell },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Fact Check', href: '/fact-check', icon: Scale },
@@ -184,7 +188,9 @@ function DesktopSidebarContent({ pathname }: { pathname: string }) {
       {/* Footer */}
       <div className="border-t border-gray-200 p-4">
         <div className="rounded-lg bg-primary-50 p-4">
-          <p className="text-sm font-medium text-primary-900">Trump Alert Pro</p>
+          <p className="text-sm font-medium text-primary-900">
+            Trump Alert Pro
+          </p>
           <p className="mt-1 text-xs text-primary-700">
             Get real-time notifications and advanced analytics.
           </p>

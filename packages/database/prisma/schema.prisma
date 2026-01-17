@@ -31,11 +31,58 @@ model Article {
   updatedAt DateTime @updatedAt
 
   // Relations
-  tags ArticleTag[]
+  tags       ArticleTag[]
+  storylines StorylineArticle[]
 
   @@index([publishedAt(sort: Desc)])
   @@index([source, publishedAt(sort: Desc)])
   @@index([impactLevel])
+}
+
+// Storyline - connects related events into a narrative
+model Storyline {
+  id            String   @id @default(uuid())
+  title         String
+  titleJa       String?
+  description   String   @db.Text
+  descriptionJa String?  @db.Text
+  status        String   @default("ongoing") // "ongoing", "resolved", "developing"
+  category      String? // "tariff", "legal", "election", "foreign_policy", etc.
+
+  // AI-generated current state summary
+  summary   String? @db.Text
+  summaryJa String? @db.Text
+
+  // Timeline metadata
+  firstEventAt DateTime
+  lastEventAt  DateTime
+  eventCount   Int      @default(0)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  articles StorylineArticle[]
+
+  @@index([status])
+  @@index([lastEventAt(sort: Desc)])
+  @@index([category])
+}
+
+// Junction table for Storyline-Article relationship
+model StorylineArticle {
+  storylineId String
+  articleId   String
+  addedAt     DateTime @default(now())
+  isKeyEvent  Boolean  @default(false) // Marks major developments
+
+  storyline Storyline @relation(fields: [storylineId], references: [id], onDelete: Cascade)
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@id([storylineId, articleId])
+  @@index([storylineId])
+  @@index([articleId])
 }
 
 model Tag {
@@ -143,6 +190,30 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Executive Orders and Presidential Documents
+model ExecutiveOrder {
+  id                    String   @id @default(uuid())
+  documentNumber        String   @unique // Federal Register document number
+  executiveOrderNumber  Int?     // EO number (e.g., 14148)
+  type                  String   // "executive_order", "proclamation", "memorandum"
+  title                 String
+  titleJa               String?
+  abstract              String?  @db.Text // Original abstract from Federal Register
+  summaryJa             String?  @db.Text // AI-generated Japanese summary
+  signingDate           DateTime
+  publicationDate       DateTime
+  htmlUrl               String   // Link to Federal Register page
+  pdfUrl                String?  // Link to PDF
+  president             String   @default("donald-trump")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([signingDate(sort: Desc)])
+  @@index([publicationDate(sort: Desc)])
 }
 
 // API Usage Tracking

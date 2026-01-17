@@ -12,6 +12,11 @@ import {
   fetchSources,
   fetchWeeklyStats,
   fetchAnalyticsOverview,
+  fetchStorylines,
+  fetchStorylineTimeline,
+  fetchRecentStorylineUpdates,
+  fetchExecutiveOrders,
+  fetchRecentExecutiveOrders,
   ArticleFilters,
 } from '../api';
 
@@ -104,6 +109,51 @@ export function useAnalyticsOverview() {
   return useQuery({
     queryKey: ['analyticsOverview'],
     queryFn: fetchAnalyticsOverview,
+    refetchInterval: 300000,
+  });
+}
+
+// Fetch all storylines
+export function useStorylines(status?: string) {
+  return useQuery({
+    queryKey: ['storylines', status],
+    queryFn: () => fetchStorylines(status),
+    refetchInterval: 60000, // Refetch every minute
+  });
+}
+
+// Fetch single storyline with timeline
+export function useStorylineTimeline(id: string) {
+  return useQuery({
+    queryKey: ['storylineTimeline', id],
+    queryFn: () => fetchStorylineTimeline(id),
+    enabled: !!id,
+  });
+}
+
+// Fetch recent storyline updates (for home feed)
+export function useRecentStorylineUpdates(limit = 5) {
+  return useQuery({
+    queryKey: ['recentStorylineUpdates', limit],
+    queryFn: () => fetchRecentStorylineUpdates(limit),
+    refetchInterval: 60000,
+  });
+}
+
+// Fetch executive orders with pagination
+export function useExecutiveOrders(type?: string, limit = 20, offset = 0) {
+  return useQuery({
+    queryKey: ['executiveOrders', type, limit, offset],
+    queryFn: () => fetchExecutiveOrders(type, limit, offset),
+    refetchInterval: 300000, // Refetch every 5 minutes
+  });
+}
+
+// Fetch recent executive orders (for sidebar widget)
+export function useRecentExecutiveOrders(limit = 5) {
+  return useQuery({
+    queryKey: ['recentExecutiveOrders', limit],
+    queryFn: () => fetchRecentExecutiveOrders(limit),
     refetchInterval: 300000,
   });
 }
