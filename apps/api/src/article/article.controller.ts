@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Param, Post } from '@nestjs/common';
 import { ArticleService, ArticleFilters } from './article.service';
 import { StatsService } from './stats.service';
+import { FactCheckService } from './fact-check.service';
 import { NewsCollectorService } from '../collector/news-collector.service';
 import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
 
@@ -9,6 +10,7 @@ export class ArticleController {
   constructor(
     private readonly articleService: ArticleService,
     private readonly statsService: StatsService,
+    private readonly factCheckService: FactCheckService,
     private readonly newsCollector: NewsCollectorService,
     private readonly aiAnalyzer: AIAnalyzerService
   ) {}
