@@ -29,19 +29,19 @@ export function TrendingTopics({ topics }: TrendingTopicsProps) {
         <div className="space-y-3">
           {topics.map((topic, index) => (
             <div
-              key={topic.id}
+              key={topic.id ?? topic.rank ?? index}
               className="flex items-center justify-between rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50"
             >
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-400">
-                  {index + 1}
+                  {topic.rank ?? index + 1}
                 </span>
                 <span className="text-sm font-medium text-gray-900">
                   #{topic.name}
                 </span>
               </div>
               <span className="text-xs text-gray-500 tabular-nums">
-                {topic.articleCount} articles
+                {topic.articleCount ?? topic.count ?? 0} articles
               </span>
             </div>
           ))}
