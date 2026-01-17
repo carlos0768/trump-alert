@@ -9,7 +9,7 @@ interface StockData {
   price: number;
   change: number;
   changePercent: number;
-  volume: string;
+  volume: number | string;
 }
 
 interface StockWidgetProps {
