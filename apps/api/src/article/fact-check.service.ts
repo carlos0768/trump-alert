@@ -74,7 +74,11 @@ export class FactCheckService {
         },
       },
       include: {
-        tags: true,
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
       },
       orderBy: {
         publishedAt: 'desc',
