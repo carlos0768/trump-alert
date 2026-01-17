@@ -88,6 +88,16 @@ export class ArticleController {
     return this.statsService.getApiUsageStats();
   }
 
+  @Get('stats/weekly')
+  async getWeeklyStats() {
+    return this.statsService.getWeeklyStats();
+  }
+
+  @Get('stats/analytics-overview')
+  async getAnalyticsOverview() {
+    return this.statsService.getAnalyticsOverview();
+  }
+
   @Post('collect')
   async triggerCollection() {
     return this.newsCollector.triggerCollection();
