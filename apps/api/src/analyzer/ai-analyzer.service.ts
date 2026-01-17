@@ -441,4 +441,123 @@ export class AIAnalyzerService {
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+
+  private async getTags(
+    title: string,
+    content: string,
+    articleId?: string
+  ): Promise<string[]> {
+    const prompt = fillPrompt(TAGS_PROMPT, {
+      title,
+      content: content.substring(0, 1500),
+    });
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          max_tokens: 100,
+        });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'tags',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        if (Array.isArray(result.tags) && result.tags.length > 0) {
+          return result.tags.slice(0, 5); // Max 5 tags
+        }
+      } catch (error) {
+        this.logger.warn(`Tags attempt ${attempt + 1} failed: ${error}`);
+        await this.sleep(1000 * Math.pow(2, attempt));
+      }
+    }
+
+    // Default tags based on simple keyword matching
+    return this.getDefaultTags(title, content);
+  }
+
+  private getDefaultTags(title: string, content: string): string[] {
+    const text = `${title} ${content}`.toLowerCase();
+    const tags: string[] = [];
+
+    const keywordMap: Record<string, string> = {
+      tariff: 'Tariff',
+      immigration: 'Immigration',
+      border: 'Border',
+      election: 'Election',
+      trial: 'Trial',
+      court: 'Trial',
+      indictment: 'Indictment',
+      china: 'China',
+      economy: 'Economy',
+      stock: 'DJTStock',
+      rally: 'Rally',
+      vance: 'Vance',
+      'truth social': 'TruthSocial',
+    };
+
+    for (const [keyword, tag] of Object.entries(keywordMap)) {
+      if (text.includes(keyword) && !tags.includes(tag)) {
+        tags.push(tag);
+      }
+    }
+
+    return tags.slice(0, 5);
+  }
+
+  private async saveTags(articleId: string, tagNames: string[]): Promise<void> {
+    try {
+      for (const tagName of tagNames) {
+        // Find or create the tag
+        let tag = await prisma.tag.findFirst({
+          where: { name: tagName },
+        });
+
+        if (!tag) {
+          tag = await prisma.tag.create({
+            data: {
+              id: `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              name: tagName,
+            },
+          });
+        }
+
+        // Check if the relationship already exists
+        const existingRelation = await prisma.articleTag.findUnique({
+          where: {
+            articleId_tagId: {
+              articleId,
+              tagId: tag.id,
+            },
+          },
+        });
+
+        // Create the relationship if it doesn't exist
+        if (!existingRelation) {
+          await prisma.articleTag.create({
+            data: {
+              articleId,
+              tagId: tag.id,
+            },
+          });
+        }
+      }
+
+      this.logger.log(`Saved ${tagNames.length} tags for article ${articleId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to save tags for article ${articleId}: ${error}`
+      );
+    }
+  }
 }
