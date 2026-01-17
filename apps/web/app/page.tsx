@@ -42,11 +42,11 @@ export default function DashboardPage() {
   const articles = articlesData?.pages.flatMap((page) => page.articles) ?? [];
 
   // Calculate current Trump Index (use mock data as fallback)
-  const indexData =
+  const indexData: TrumpIndexDataPoint[] =
     trumpIndexData && trumpIndexData.length > 0
       ? trumpIndexData
       : mockTrumpIndexData;
-  const getSentiment = (item: (typeof indexData)[number] | undefined) =>
+  const getSentiment = (item: TrumpIndexDataPoint | undefined) =>
     item?.sentiment ?? item?.avgSentiment ?? 0;
   const currentIndex = getSentiment(indexData[indexData.length - 1]);
   const previousIndex = getSentiment(indexData[indexData.length - 2]);
