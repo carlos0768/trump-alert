@@ -136,4 +136,21 @@ export class ArticleController {
       results,
     };
   }
+
+  // ファクトチェック関連のエンドポイント
+  @Get('fact-check')
+  async getFactCheckComparisons(@Query('limit') limit?: string) {
+    return this.factCheckService.getFactCheckComparisons(
+      limit ? parseInt(limit) : 10
+    );
+  }
+
+  @Get('fact-check/:topic')
+  async getComparisonByTopic(@Param('topic') topic: string) {
+    const comparison = await this.factCheckService.getComparisonByTopic(topic);
+    if (!comparison) {
+      return { error: 'No comparison found for this topic' };
+    }
+    return comparison;
+  }
 }
