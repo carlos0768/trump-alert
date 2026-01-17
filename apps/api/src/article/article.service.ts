@@ -173,4 +173,15 @@ export class ArticleService {
       take: limit,
     });
   }
+
+  async findArticlesWithoutTags(limit: number = 20) {
+    // Find articles that have no tags assigned yet
+    return prisma.article.findMany({
+      where: {
+        tags: { none: {} },
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: limit,
+    });
+  }
 }
