@@ -162,4 +162,15 @@ export class ArticleService {
       count: s._count.source,
     }));
   }
+
+  async findUnanalyzed(limit: number = 10) {
+    // Find articles that don't have Japanese translation yet
+    return prisma.article.findMany({
+      where: {
+        OR: [{ titleJa: null }, { titleJa: '' }],
+      },
+      orderBy: { publishedAt: 'desc' },
+      take: limit,
+    });
+  }
 }

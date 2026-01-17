@@ -3,8 +3,18 @@ import OpenAI from 'openai';
 import { PrismaClient } from '@prisma/client';
 
 // AI Prompts
+const TRANSLATE_PROMPT = `
+以下の英語ニュース記事を日本語に翻訳してください。自然で読みやすい日本語にしてください。
+
+タイトル: {title}
+本文: {content}
+
+JSON形式で返してください:
+{ "titleJa": "日本語タイトル", "contentJa": "日本語本文" }
+`;
+
 const SUMMARIZE_PROMPT = `
-以下のニュース記事を3つの要点（各30文字以内）にまとめてください。
+以下のニュース記事を3つの要点（各30文字以内）で日本語にまとめてください。
 
 記事タイトル: {title}
 本文: {content}
@@ -54,7 +64,9 @@ function fillPrompt(template: string, values: Record<string, string>): string {
 
 const prisma = new PrismaClient();
 
-interface AnalysisResult {
+export interface AnalysisResult {
+  titleJa: string;
+  contentJa: string;
   summary: string[];
   sentiment: number;
   bias: 'Left' | 'Center' | 'Right';
@@ -86,7 +98,13 @@ export class AIAnalyzerService {
     this.logger.log(`Analyzing article: ${article.title.substring(0, 50)}...`);
 
     try {
-      // Run all analyses in parallel
+      // First, translate to Japanese
+      const { titleJa, contentJa } = await this.translateToJapanese(
+        article.title,
+        article.content
+      );
+
+      // Then run all analyses in parallel
       const [summary, sentiment, bias, impactLevel] = await Promise.all([
         this.getSummary(article.title, article.content),
         this.getSentiment(article.content),
@@ -95,6 +113,8 @@ export class AIAnalyzerService {
       ]);
 
       const result: AnalysisResult = {
+        titleJa,
+        contentJa,
         summary,
         sentiment,
         bias,
@@ -105,6 +125,8 @@ export class AIAnalyzerService {
       await prisma.article.update({
         where: { id: articleId },
         data: {
+          titleJa: result.titleJa,
+          contentJa: result.contentJa,
           summary: result.summary,
           sentiment: result.sentiment,
           bias: result.bias,
@@ -122,9 +144,9 @@ export class AIAnalyzerService {
         where: { id: articleId },
         data: {
           summary: [
-            'Analysis failed',
-            'Please try again',
-            'No summary available',
+            '分析に失敗しました',
+            '後でもう一度お試しください',
+            '要約は利用できません',
           ],
           sentiment: 0,
           impactLevel: 'C',
@@ -133,6 +155,41 @@ export class AIAnalyzerService {
 
       return null;
     }
+  }
+
+  private async translateToJapanese(
+    title: string,
+    content: string
+  ): Promise<{ titleJa: string; contentJa: string }> {
+    const prompt = fillPrompt(TRANSLATE_PROMPT, {
+      title,
+      content: content.substring(0, 3000),
+    });
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          max_tokens: 2000,
+        });
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        if (result.titleJa && result.contentJa) {
+          return {
+            titleJa: result.titleJa,
+            contentJa: result.contentJa,
+          };
+        }
+      } catch (error) {
+        this.logger.warn(`Translation attempt ${attempt + 1} failed: ${error}`);
+        await this.sleep(1000 * Math.pow(2, attempt));
+      }
+    }
+
+    // Fallback to original text
+    return { titleJa: title, contentJa: content };
   }
 
   private async getSummary(title: string, content: string): Promise<string[]> {
@@ -160,7 +217,7 @@ export class AIAnalyzerService {
       }
     }
 
-    return ['Summary unavailable', 'AI analysis pending', 'Check back later'];
+    return ['要約を取得できませんでした', 'AI分析中です', '後でご確認ください'];
   }
 
   private async getSentiment(content: string): Promise<number> {

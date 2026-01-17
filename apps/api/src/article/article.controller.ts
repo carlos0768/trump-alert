@@ -2,13 +2,15 @@ import { Controller, Get, Query, Param, Post } from '@nestjs/common';
 import { ArticleService, ArticleFilters } from './article.service';
 import { StatsService } from './stats.service';
 import { NewsCollectorService } from '../collector/news-collector.service';
+import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
 
 @Controller('api')
 export class ArticleController {
   constructor(
     private readonly articleService: ArticleService,
     private readonly statsService: StatsService,
-    private readonly newsCollector: NewsCollectorService
+    private readonly newsCollector: NewsCollectorService,
+    private readonly aiAnalyzer: AIAnalyzerService
   ) {}
 
   @Get('articles')
@@ -84,5 +86,37 @@ export class ArticleController {
   @Post('collect')
   async triggerCollection() {
     return this.newsCollector.triggerCollection();
+  }
+
+  @Post('analyze/:id')
+  async analyzeArticle(@Param('id') id: string) {
+    const result = await this.aiAnalyzer.analyzeArticle(id);
+    if (!result) {
+      return { error: 'Analysis failed or article not found' };
+    }
+    return { success: true, result };
+  }
+
+  @Post('analyze-all')
+  async analyzeUnanalyzedArticles(@Query('limit') limit?: string) {
+    const articles = await this.articleService.findUnanalyzed(
+      limit ? parseInt(limit) : 10
+    );
+
+    const results = [];
+    for (const article of articles) {
+      const result = await this.aiAnalyzer.analyzeArticle(article.id);
+      results.push({
+        id: article.id,
+        title: article.title,
+        success: !!result,
+      });
+    }
+
+    return {
+      analyzed: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
+    };
   }
 }
