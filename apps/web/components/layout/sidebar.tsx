@@ -111,13 +111,16 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-4 z-40 rounded-lg bg-white p-2 text-gray-500 shadow-md hover:bg-gray-100 lg:hidden"
-      >
-        <Menu className="size-5" />
-      </button>
+      {/* Mobile menu button - only show when sidebar is closed */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed left-4 top-4 z-40 block rounded-lg bg-white p-2 text-gray-500 shadow-md hover:bg-gray-100 lg:hidden"
+          style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))' }}
+        >
+          <Menu className="size-5" />
+        </button>
+      )}
 
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white lg:block">
@@ -125,19 +128,21 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile Sidebar Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      <div
+        className={cn(
+          'fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 lg:pointer-events-none lg:opacity-0',
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        onClick={() => setIsOpen(false)}
+      />
 
       {/* Mobile Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 transform border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out lg:hidden',
+          'fixed inset-y-0 left-0 z-50 w-64 border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out lg:pointer-events-none lg:hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        style={{ paddingLeft: 'env(safe-area-inset-left)' }}
       >
         <SidebarContent />
       </aside>
