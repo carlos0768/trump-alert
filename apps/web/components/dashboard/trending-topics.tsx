@@ -4,10 +4,12 @@ import { TrendingUp } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 interface TrendingTopic {
-  id: string;
+  id?: string;
+  rank?: number;
   name: string;
-  articleCount: number;
-  trend: 'up' | 'down' | 'stable';
+  articleCount?: number;
+  count?: number;
+  trend?: 'up' | 'down' | 'stable';
 }
 
 interface TrendingTopicsProps {
