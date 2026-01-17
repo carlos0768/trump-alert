@@ -15,18 +15,21 @@ import { StreamModule } from './stream/stream.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../.env',
+      envFilePath:
+        process.env.NODE_ENV === 'production' ? undefined : '../../.env',
     }),
     PrismaModule,
     ScheduleModule.forRoot(),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD,
-        tls: process.env.REDIS_HOST?.includes('upstash') ? {} : undefined,
-        maxRetriesPerRequest: null,
-      },
+    BullModule.forRootAsync({
+      useFactory: () => ({
+        connection: {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          password: process.env.REDIS_PASSWORD,
+          tls: process.env.REDIS_HOST?.includes('upstash') ? {} : undefined,
+          maxRetriesPerRequest: null,
+        },
+      }),
     }),
     CollectorModule,
     AnalyzerModule,
