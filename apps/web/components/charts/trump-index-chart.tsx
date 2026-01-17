@@ -29,8 +29,15 @@ interface TrumpIndexChartProps {
   change: number;
 }
 
+// Normalized data type for internal use
+interface NormalizedDataPoint {
+  time: string;
+  sentiment: number;
+  articleCount: number;
+}
+
 // Helper to normalize data from different sources (API uses hour/avgSentiment, mock uses time/sentiment)
-function normalizeData(data: TrumpIndexDataPoint[]) {
+function normalizeData(data: TrumpIndexDataPoint[]): NormalizedDataPoint[] {
   return data.map((item) => ({
     time: item.time ?? item.hour ?? '',
     sentiment: item.sentiment ?? item.avgSentiment ?? 0,
