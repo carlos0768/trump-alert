@@ -153,4 +153,28 @@ export class ArticleController {
     }
     return comparison;
   }
+
+  // Backfill tags for existing articles
+  @Post('backfill-tags')
+  async backfillTags(@Query('limit') limit?: string) {
+    const articles = await this.articleService.findArticlesWithoutTags(
+      limit ? parseInt(limit) : 20
+    );
+
+    const results = [];
+    for (const article of articles) {
+      const result = await this.aiAnalyzer.analyzeArticle(article.id);
+      results.push({
+        id: article.id,
+        title: article.title,
+        success: !!result,
+      });
+    }
+
+    return {
+      processed: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
+    };
+  }
 }
