@@ -212,7 +212,7 @@ export class FactCheckService {
       where: {
         tags: {
           some: {
-            id: tag.id,
+            tagId: tag.id,
           },
         },
         publishedAt: {
