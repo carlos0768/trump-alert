@@ -10,10 +10,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService, CreateUserDto, UpdateUserDto } from './auth.service';
+import { EmailService } from '../notification/email.service';
 
 @Controller('api/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly emailService: EmailService
+  ) {}
 
   // ユーザー登録（メール認証トークン発行）
   @Post('register')
@@ -22,14 +26,21 @@ export class AuthController {
     const user = await this.authService.createUser(dto);
     const token = await this.authService.createVerificationToken(dto.email);
 
-    // 本番環境ではここでメールを送信
-    // await emailService.sendVerificationEmail(dto.email, token);
+    // Send verification email
+    const emailSent = await this.emailService.sendAuthEmail({
+      to: dto.email,
+      token,
+      type: 'verification',
+    });
 
     return {
-      message: 'User created. Please check your email for verification.',
+      message: emailSent
+        ? '確認メールを送信しました。メールを確認してください。'
+        : 'ユーザーを作成しました。',
       userId: user.id,
-      // 開発環境用：本番では返さない
-      ...(process.env.NODE_ENV !== 'production' && {
+      emailSent,
+      // 開発環境用：メールが送れない場合のフォールバック
+      ...(!emailSent && {
         verificationToken: token,
       }),
     };
@@ -78,13 +89,20 @@ export class AuthController {
     // マジックリンク用のトークン生成
     const token = await this.authService.createVerificationToken(email);
 
-    // 本番環境ではここでメールを送信
-    // await emailService.sendLoginEmail(email, token);
+    // Send login email
+    const emailSent = await this.emailService.sendAuthEmail({
+      to: email,
+      token,
+      type: 'login',
+    });
 
     return {
-      message: 'Login link sent to your email',
-      // 開発環境用：本番では返さない
-      ...(process.env.NODE_ENV !== 'production' && { loginToken: token }),
+      message: emailSent
+        ? 'ログインリンクをメールに送信しました。'
+        : 'ログインリンクを生成しました。',
+      emailSent,
+      // 開発環境用：メールが送れない場合のフォールバック
+      ...(!emailSent && { loginToken: token }),
     };
   }
 

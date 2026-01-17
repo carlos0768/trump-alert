@@ -33,7 +33,7 @@ export class NotificationService {
   ) {}
 
   async sendNotification(payload: NotificationPayload): Promise<void> {
-    const promises: Promise<void>[] = [];
+    const promises: Promise<unknown>[] = [];
 
     if (payload.notifyPush && payload.user.pushSubscription) {
       promises.push(

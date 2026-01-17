@@ -2,12 +2,11 @@ import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import Parser from 'rss-parser';
 import { createHash } from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
 import { StreamService } from '../stream/stream.service';
 import { AlertService } from '../alert/alert.service';
 
-const prisma = new PrismaClient();
 const parser = new Parser();
 
 interface RSSItem {
@@ -24,6 +23,7 @@ export class NewsCollectorService {
   private readonly logger = new Logger(NewsCollectorService.name);
 
   constructor(
+    private prisma: PrismaService,
     @Inject(forwardRef(() => AIAnalyzerService))
     private readonly aiAnalyzer: AIAnalyzerService,
     @Inject(forwardRef(() => StreamService))
@@ -174,7 +174,7 @@ export class NewsCollectorService {
   }
 
   private async articleExists(urlHash: string): Promise<boolean> {
-    const existing = await prisma.article.findFirst({
+    const existing = await this.prisma.article.findFirst({
       where: { url: { contains: urlHash.substring(0, 8) } },
     });
     return !!existing;
@@ -185,10 +185,13 @@ export class NewsCollectorService {
     feed: { source: string; bias: 'Left' | 'Center' | 'Right' }
   ) {
     try {
-      const article = await prisma.article.create({
-        data: {
+      const url = item.link || '';
+      const article = await this.prisma.article.upsert({
+        where: { url },
+        update: {}, // Don't update if already exists
+        create: {
           title: item.title || 'Untitled',
-          url: item.link || '',
+          url,
           source: feed.source,
           content: item.content || item.contentSnippet || '',
           publishedAt: item.isoDate ? new Date(item.isoDate) : new Date(),

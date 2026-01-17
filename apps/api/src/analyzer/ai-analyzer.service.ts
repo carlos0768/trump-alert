@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 // AI Prompts
 const TRANSLATE_PROMPT = `
@@ -74,8 +74,6 @@ function fillPrompt(template: string, values: Record<string, string>): string {
   return result;
 }
 
-const prisma = new PrismaClient();
-
 export interface AnalysisResult {
   id: string;
   title: string;
@@ -115,7 +113,7 @@ export class AIAnalyzerService {
   private openai: OpenAI;
   private maxRetries = 3;
 
-  constructor() {
+  constructor(private prisma: PrismaService) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
@@ -130,7 +128,7 @@ export class AIAnalyzerService {
   ): Promise<void> {
     try {
       const cost = calculateCost(model, inputTokens, outputTokens);
-      await prisma.apiUsage.create({
+      await this.prisma.apiUsage.create({
         data: {
           provider: 'openai',
           model,
@@ -147,7 +145,7 @@ export class AIAnalyzerService {
   }
 
   async analyzeArticle(articleId: string): Promise<AnalysisResult | null> {
-    const article = await prisma.article.findUnique({
+    const article = await this.prisma.article.findUnique({
       where: { id: articleId },
     });
 
@@ -192,7 +190,7 @@ export class AIAnalyzerService {
       };
 
       // Update the article with analysis results
-      await prisma.article.update({
+      await this.prisma.article.update({
         where: { id: articleId },
         data: {
           titleJa: result.titleJa,
@@ -210,7 +208,7 @@ export class AIAnalyzerService {
       this.logger.error(`Analysis failed for article ${articleId}: ${error}`);
 
       // Save default values on failure
-      await prisma.article.update({
+      await this.prisma.article.update({
         where: { id: articleId },
         data: {
           summary: [
@@ -519,12 +517,12 @@ export class AIAnalyzerService {
     try {
       for (const tagName of tagNames) {
         // Find or create the tag
-        let tag = await prisma.tag.findFirst({
+        let tag = await this.prisma.tag.findFirst({
           where: { name: tagName },
         });
 
         if (!tag) {
-          tag = await prisma.tag.create({
+          tag = await this.prisma.tag.create({
             data: {
               id: `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               name: tagName,
@@ -533,7 +531,7 @@ export class AIAnalyzerService {
         }
 
         // Check if the relationship already exists
-        const existingRelation = await prisma.articleTag.findUnique({
+        const existingRelation = await this.prisma.articleTag.findUnique({
           where: {
             articleId_tagId: {
               articleId,
@@ -544,7 +542,7 @@ export class AIAnalyzerService {
 
         // Create the relationship if it doesn't exist
         if (!existingRelation) {
-          await prisma.articleTag.create({
+          await this.prisma.articleTag.create({
             data: {
               articleId,
               tagId: tag.id,

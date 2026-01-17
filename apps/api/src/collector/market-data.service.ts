@@ -1,8 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
 
 interface StockQuote {
   symbol: string;
@@ -15,6 +13,8 @@ interface StockQuote {
 @Injectable()
 export class MarketDataService {
   private readonly logger = new Logger(MarketDataService.name);
+
+  constructor(private prisma: PrismaService) {}
 
   // Run every hour during market hours (9:30 AM - 4:00 PM EST, Mon-Fri)
   @Cron('0 30 9-16 * * 1-5', {
@@ -65,7 +65,7 @@ export class MarketDataService {
 
   private async saveStockPrice(data: StockQuote) {
     try {
-      await prisma.stockPrice.create({
+      await this.prisma.stockPrice.create({
         data: {
           symbol: data.symbol,
           price: data.price,
@@ -103,7 +103,7 @@ export class MarketDataService {
   }
 
   async getLatestPrice(): Promise<StockQuote | null> {
-    const latest = await prisma.stockPrice.findFirst({
+    const latest = await this.prisma.stockPrice.findFirst({
       where: { symbol: 'DJT' },
       orderBy: { timestamp: 'desc' },
     });
@@ -124,7 +124,7 @@ export class MarketDataService {
   async getPriceHistory(hours: number = 24) {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
-    return prisma.stockPrice.findMany({
+    return this.prisma.stockPrice.findMany({
       where: {
         symbol: 'DJT',
         timestamp: { gte: since },

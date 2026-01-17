@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { NewsCollectorService } from './news-collector.service';
 import { TruthSocialScraperService } from './truth-social-scraper.service';
 import { MarketDataService } from './market-data.service';
+import { StockCollectorService } from './stock-collector.service';
 import { CollectorProcessor } from './collector.processor';
 import { AnalyzerModule } from '../analyzer/analyzer.module';
 import { StreamModule } from '../stream/stream.module';
@@ -21,8 +22,14 @@ import { AlertModule } from '../alert/alert.module';
     NewsCollectorService,
     TruthSocialScraperService,
     MarketDataService,
+    StockCollectorService,
     CollectorProcessor,
   ],
-  exports: [NewsCollectorService, TruthSocialScraperService, MarketDataService],
+  exports: [
+    NewsCollectorService,
+    TruthSocialScraperService,
+    MarketDataService,
+    StockCollectorService,
+  ],
 })
 export class CollectorModule {}

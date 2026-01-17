@@ -11,12 +11,129 @@ interface EmailPayload {
   impactLevel: string;
 }
 
+interface AuthEmailPayload {
+  to: string;
+  token: string;
+  type: 'verification' | 'login';
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly resendApiKey = process.env.RESEND_API_KEY;
   private readonly fromEmail =
     process.env.EMAIL_FROM || 'Trump Alert <noreply@trumpalert.app>';
+  private readonly appUrl = process.env.APP_URL || 'http://localhost:3000';
+
+  /**
+   * Send authentication email (verification or login)
+   */
+  async sendAuthEmail(payload: AuthEmailPayload): Promise<boolean> {
+    if (!this.resendApiKey) {
+      this.logger.warn('RESEND_API_KEY not configured, skipping auth email');
+      return false;
+    }
+
+    const isVerification = payload.type === 'verification';
+    const subject = isVerification
+      ? 'Trump Alert - メールアドレスの確認'
+      : 'Trump Alert - ログインリンク';
+    const actionUrl = `${this.appUrl}/auth/verify?token=${payload.token}&type=${payload.type}`;
+
+    const html = this.generateAuthEmailHtml({
+      type: payload.type,
+      actionUrl,
+    });
+
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: this.fromEmail,
+          to: payload.to,
+          subject,
+          html,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Resend API error: ${error}`);
+      }
+
+      this.logger.log(`Auth email (${payload.type}) sent to ${payload.to}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to send auth email:', error);
+      return false;
+    }
+  }
+
+  private generateAuthEmailHtml(params: {
+    type: 'verification' | 'login';
+    actionUrl: string;
+  }): string {
+    const isVerification = params.type === 'verification';
+    const title = isVerification ? 'メールアドレスの確認' : 'ログイン';
+    const message = isVerification
+      ? 'Trump Alert にご登録いただきありがとうございます。以下のボタンをクリックしてメールアドレスを確認してください。'
+      : 'ログインリンクのリクエストを受け取りました。以下のボタンをクリックしてログインしてください。';
+    const buttonText = isVerification ? 'メールアドレスを確認' : 'ログインする';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); color: white; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 24px;">🔔 Trump Alert</h1>
+  </div>
+
+  <div style="background: white; padding: 32px; border: 1px solid #e5e7eb; border-top: none;">
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; color: #1e3a5f;">${title}</h2>
+
+    <p style="margin: 0 0 24px 0; color: #4b5563;">
+      ${message}
+    </p>
+
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${params.actionUrl}"
+         style="display: inline-block; background: #2563eb; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+        ${buttonText}
+      </a>
+    </div>
+
+    <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280;">
+      このリンクは24時間有効です。リンクが機能しない場合は、以下のURLをブラウザにコピー＆ペーストしてください：
+    </p>
+    <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af; word-break: break-all;">
+      ${params.actionUrl}
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+
+    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+      このメールに心当たりがない場合は、無視してください。
+    </p>
+  </div>
+
+  <div style="background: #f3f4f6; padding: 16px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #6b7280;">
+    <p style="margin: 0;">
+      © 2025 Trump Alert. All rights reserved.
+    </p>
+  </div>
+</body>
+</html>
+    `;
+  }
 
   async send(payload: EmailPayload): Promise<void> {
     if (!this.resendApiKey) {

@@ -1,9 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateAlertDto {
   userId: string;
@@ -26,11 +24,12 @@ export interface UpdateAlertDto {
 @Injectable()
 export class AlertService {
   constructor(
+    private prisma: PrismaService,
     @InjectQueue('notification-send') private notificationQueue: Queue
   ) {}
 
   async create(dto: CreateAlertDto) {
-    return prisma.alert.create({
+    return this.prisma.alert.create({
       data: {
         userId: dto.userId,
         keyword: dto.keyword,
@@ -43,14 +42,14 @@ export class AlertService {
   }
 
   async findAllByUser(userId: string) {
-    return prisma.alert.findMany({
+    return this.prisma.alert.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async findOne(id: string) {
-    const alert = await prisma.alert.findUnique({ where: { id } });
+    const alert = await this.prisma.alert.findUnique({ where: { id } });
     if (!alert) {
       throw new NotFoundException(`Alert with id ${id} not found`);
     }
@@ -59,7 +58,7 @@ export class AlertService {
 
   async update(id: string, dto: UpdateAlertDto) {
     await this.findOne(id);
-    return prisma.alert.update({
+    return this.prisma.alert.update({
       where: { id },
       data: dto,
     });
@@ -67,11 +66,11 @@ export class AlertService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return prisma.alert.delete({ where: { id } });
+    return this.prisma.alert.delete({ where: { id } });
   }
 
   async getActiveAlerts() {
-    return prisma.alert.findMany({
+    return this.prisma.alert.findMany({
       where: { isActive: true },
       include: { user: true },
     });

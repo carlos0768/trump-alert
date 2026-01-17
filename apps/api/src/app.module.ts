@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
+import { PrismaModule } from './prisma/prisma.module';
 import { CollectorModule } from './collector/collector.module';
 import { ArticleModule } from './article/article.module';
 import { AnalyzerModule } from './analyzer/analyzer.module';
@@ -16,6 +17,7 @@ import { StreamModule } from './stream/stream.module';
       isGlobal: true,
       envFilePath: '../../.env',
     }),
+    PrismaModule,
     ScheduleModule.forRoot(),
     BullModule.forRoot({
       connection: {

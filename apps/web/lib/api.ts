@@ -247,3 +247,63 @@ export async function fetchAnalyticsOverview(): Promise<AnalyticsOverview | null
 
   return res.json();
 }
+
+// Fact Check types and API
+export interface ComparisonArticle {
+  id: string;
+  source: string;
+  title: string;
+  titleJa?: string;
+  summary: string;
+  sentiment: number;
+  url: string;
+  publishedAt: string;
+}
+
+export interface ComparisonPair {
+  id: string;
+  topic: string;
+  topicJa?: string;
+  left: ComparisonArticle | null;
+  center: ComparisonArticle | null;
+  right: ComparisonArticle | null;
+  sentimentGap: number;
+}
+
+// Fetch fact check comparisons
+export async function fetchFactCheckComparisons(
+  limit = 10
+): Promise<ComparisonPair[]> {
+  const res = await fetch(`${API_URL}/api/fact-check?limit=${limit}`, {
+    next: { revalidate: 300 },
+  });
+
+  if (!res.ok) {
+    return [];
+  }
+
+  return res.json();
+}
+
+// Fetch comparison by topic
+export async function fetchComparisonByTopic(
+  topic: string
+): Promise<ComparisonPair | null> {
+  const res = await fetch(
+    `${API_URL}/api/fact-check/${encodeURIComponent(topic)}`,
+    {
+      next: { revalidate: 300 },
+    }
+  );
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const data = await res.json();
+  if (data.error) {
+    return null;
+  }
+
+  return data;
+}

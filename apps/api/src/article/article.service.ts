@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface ArticleFilters {
   sources?: string[];
@@ -14,6 +12,8 @@ export interface ArticleFilters {
 @Injectable()
 export class ArticleService {
   private readonly logger = new Logger(ArticleService.name);
+
+  constructor(private prisma: PrismaService) {}
 
   async findMany(
     limit: number = 50,
@@ -69,7 +69,7 @@ export class ArticleService {
     }
 
     const [articles, total] = await Promise.all([
-      prisma.article.findMany({
+      this.prisma.article.findMany({
         where,
         orderBy: { publishedAt: 'desc' },
         take: limit,
@@ -80,7 +80,7 @@ export class ArticleService {
           },
         },
       }),
-      prisma.article.count({ where }),
+      this.prisma.article.count({ where }),
     ]);
 
     // Transform to flatten tags
@@ -97,7 +97,7 @@ export class ArticleService {
   }
 
   async findById(id: string) {
-    const article = await prisma.article.findUnique({
+    const article = await this.prisma.article.findUnique({
       where: { id },
       include: {
         tags: {
@@ -115,7 +115,7 @@ export class ArticleService {
   }
 
   async getRelatedArticles(id: string, limit: number = 5) {
-    const article = await prisma.article.findUnique({
+    const article = await this.prisma.article.findUnique({
       where: { id },
       include: {
         tags: {
@@ -131,7 +131,7 @@ export class ArticleService {
     const tagIds = article.tags.map((at) => at.tagId);
 
     // Find articles with similar tags or same bias
-    return prisma.article.findMany({
+    return this.prisma.article.findMany({
       where: {
         id: { not: id },
         OR: [
@@ -151,7 +151,7 @@ export class ArticleService {
   }
 
   async getSources() {
-    const sources = await prisma.article.groupBy({
+    const sources = await this.prisma.article.groupBy({
       by: ['source'],
       _count: { source: true },
       orderBy: { _count: { source: 'desc' } },
@@ -165,7 +165,7 @@ export class ArticleService {
 
   async findUnanalyzed(limit: number = 10) {
     // Find articles that don't have Japanese translation yet
-    return prisma.article.findMany({
+    return this.prisma.article.findMany({
       where: {
         OR: [{ titleJa: null }, { titleJa: '' }],
       },
@@ -176,7 +176,7 @@ export class ArticleService {
 
   async findArticlesWithoutTags(limit: number = 20) {
     // Find articles that have no tags assigned yet
-    return prisma.article.findMany({
+    return this.prisma.article.findMany({
       where: {
         tags: { none: {} },
       },

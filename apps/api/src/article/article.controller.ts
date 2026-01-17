@@ -3,6 +3,8 @@ import { ArticleService, ArticleFilters } from './article.service';
 import { StatsService } from './stats.service';
 import { FactCheckService } from './fact-check.service';
 import { NewsCollectorService } from '../collector/news-collector.service';
+import { StockCollectorService } from '../collector/stock-collector.service';
+import { TruthSocialScraperService } from '../collector/truth-social-scraper.service';
 import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
 
 @Controller('api')
@@ -12,6 +14,8 @@ export class ArticleController {
     private readonly statsService: StatsService,
     private readonly factCheckService: FactCheckService,
     private readonly newsCollector: NewsCollectorService,
+    private readonly stockCollector: StockCollectorService,
+    private readonly truthSocialScraper: TruthSocialScraperService,
     private readonly aiAnalyzer: AIAnalyzerService
   ) {}
 
@@ -103,6 +107,21 @@ export class ArticleController {
   @Post('collect')
   async triggerCollection() {
     return this.newsCollector.triggerCollection();
+  }
+
+  @Post('collect-stock')
+  async triggerStockCollection() {
+    return this.stockCollector.triggerCollection();
+  }
+
+  @Post('scrape-truth')
+  async triggerTruthSocialScrape() {
+    const count = await this.truthSocialScraper.scrape();
+    return {
+      success: true,
+      message: `Scraped ${count} posts from Truth Social`,
+      count,
+    };
   }
 
   @Post('analyze/:id')

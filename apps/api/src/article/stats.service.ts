@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 interface OperationTotal {
   operation: string;
@@ -33,12 +32,14 @@ interface BiasItem {
 export class StatsService {
   private readonly logger = new Logger(StatsService.name);
 
+  constructor(private prisma: PrismaService) {}
+
   async getTrumpIndex(date?: string): Promise<HourlyData[]> {
     const targetDate = date ? new Date(date) : new Date();
     const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
 
-    const articles = await prisma.article.findMany({
+    const articles = await this.prisma.article.findMany({
       where: {
         publishedAt: {
           gte: startOfDay,
@@ -89,19 +90,19 @@ export class StatsService {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
 
     const [totalArticles, bySentiment, byImpact, byBias] = await Promise.all([
-      prisma.article.count({
+      this.prisma.article.count({
         where: { publishedAt: { gte: startOfDay } },
       }),
-      prisma.article.aggregate({
+      this.prisma.article.aggregate({
         where: { publishedAt: { gte: startOfDay } },
         _avg: { sentiment: true },
       }),
-      prisma.article.groupBy({
+      this.prisma.article.groupBy({
         by: ['impactLevel'],
         where: { publishedAt: { gte: startOfDay } },
         _count: true,
       }),
-      prisma.article.groupBy({
+      this.prisma.article.groupBy({
         by: ['bias'],
         where: { publishedAt: { gte: startOfDay } },
         _count: true,
@@ -130,7 +131,7 @@ export class StatsService {
 
   async getTrendingTopics(limit: number = 10) {
     // Get most frequently occurring tags in recent articles
-    const recentArticles = await prisma.article.findMany({
+    const recentArticles = await this.prisma.article.findMany({
       where: {
         publishedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       },
@@ -162,12 +163,12 @@ export class StatsService {
   }
 
   async getStockData() {
-    const latestPrice = await prisma.stockPrice.findFirst({
+    const latestPrice = await this.prisma.stockPrice.findFirst({
       where: { symbol: 'DJT' },
       orderBy: { timestamp: 'desc' },
     });
 
-    const previousPrice = await prisma.stockPrice.findFirst({
+    const previousPrice = await this.prisma.stockPrice.findFirst({
       where: {
         symbol: 'DJT',
         timestamp: {
@@ -207,12 +208,12 @@ export class StatsService {
       const endOfDay = new Date(date.setHours(23, 59, 59, 999));
 
       const [articleCount, sentimentData] = await Promise.all([
-        prisma.article.count({
+        this.prisma.article.count({
           where: {
             publishedAt: { gte: startOfDay, lte: endOfDay },
           },
         }),
-        prisma.article.aggregate({
+        this.prisma.article.aggregate({
           where: {
             publishedAt: { gte: startOfDay, lte: endOfDay },
             sentiment: { not: null },
@@ -247,22 +248,22 @@ export class StatsService {
       sourceDistribution,
     ] = await Promise.all([
       // Total articles
-      prisma.article.count(),
+      this.prisma.article.count(),
       // This week's articles
-      prisma.article.count({
+      this.prisma.article.count({
         where: { publishedAt: { gte: startOfWeek } },
       }),
       // Average sentiment
-      prisma.article.aggregate({
+      this.prisma.article.aggregate({
         where: { sentiment: { not: null } },
         _avg: { sentiment: true },
       }),
       // Unique sources count
-      prisma.article.groupBy({
+      this.prisma.article.groupBy({
         by: ['source'],
       }),
       // Source distribution
-      prisma.article.groupBy({
+      this.prisma.article.groupBy({
         by: ['source'],
         _count: true,
         orderBy: { _count: { source: 'desc' } },
@@ -307,7 +308,7 @@ export class StatsService {
     const [todayStats, monthStats, byOperation, recentUsage] =
       await Promise.all([
         // Today's totals
-        prisma.apiUsage.aggregate({
+        this.prisma.apiUsage.aggregate({
           where: { createdAt: { gte: startOfToday } },
           _sum: {
             inputTokens: true,
@@ -317,7 +318,7 @@ export class StatsService {
           _count: true,
         }),
         // Month's totals
-        prisma.apiUsage.aggregate({
+        this.prisma.apiUsage.aggregate({
           where: { createdAt: { gte: startOfMonth } },
           _sum: {
             inputTokens: true,
@@ -327,7 +328,7 @@ export class StatsService {
           _count: true,
         }),
         // Breakdown by operation
-        prisma.apiUsage.groupBy({
+        this.prisma.apiUsage.groupBy({
           by: ['operation'],
           _sum: {
             inputTokens: true,
@@ -338,7 +339,7 @@ export class StatsService {
           orderBy: { _sum: { cost: 'desc' } },
         }),
         // Recent usage entries
-        prisma.apiUsage.findMany({
+        this.prisma.apiUsage.findMany({
           orderBy: { createdAt: 'desc' },
           take: 50,
           select: {

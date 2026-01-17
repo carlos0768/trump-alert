@@ -3,10 +3,8 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
-
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateUserDto {
   email: string;
@@ -21,12 +19,14 @@ export interface UpdateUserDto {
 
 @Injectable()
 export class AuthService {
+  constructor(private prisma: PrismaService) {}
+
   // メール認証トークンの生成
   async createVerificationToken(email: string): Promise<string> {
     const token = crypto.randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24時間有効
 
-    await prisma.verificationToken.create({
+    await this.prisma.verificationToken.create({
       data: {
         identifier: email,
         token,
@@ -39,7 +39,7 @@ export class AuthService {
 
   // メール認証トークンの検証
   async verifyToken(token: string): Promise<string | null> {
-    const verification = await prisma.verificationToken.findUnique({
+    const verification = await this.prisma.verificationToken.findUnique({
       where: { token },
     });
 
@@ -48,19 +48,19 @@ export class AuthService {
     }
 
     if (verification.expires < new Date()) {
-      await prisma.verificationToken.delete({ where: { token } });
+      await this.prisma.verificationToken.delete({ where: { token } });
       return null;
     }
 
     // トークンを削除
-    await prisma.verificationToken.delete({ where: { token } });
+    await this.prisma.verificationToken.delete({ where: { token } });
 
     return verification.identifier;
   }
 
   // ユーザー作成
   async createUser(dto: CreateUserDto) {
-    const existing = await prisma.user.findUnique({
+    const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
@@ -68,7 +68,7 @@ export class AuthService {
       throw new ConflictException('User with this email already exists');
     }
 
-    return prisma.user.create({
+    return this.prisma.user.create({
       data: {
         email: dto.email,
         name: dto.name,
@@ -78,7 +78,7 @@ export class AuthService {
 
   // ユーザー取得（メールで）
   async findByEmail(email: string) {
-    return prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { email },
       include: { alerts: true },
     });
@@ -86,7 +86,7 @@ export class AuthService {
 
   // ユーザー取得（IDで）
   async findById(id: string) {
-    const user = await prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
       include: { alerts: true },
     });
@@ -102,7 +102,7 @@ export class AuthService {
   async updateUser(id: string, dto: UpdateUserDto) {
     await this.findById(id);
 
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id },
       data: dto,
     });
@@ -110,7 +110,7 @@ export class AuthService {
 
   // Push Subscription の保存
   async savePushSubscription(userId: string, subscription: unknown) {
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id: userId },
       data: { pushSubscription: subscription as object },
     });
@@ -118,7 +118,7 @@ export class AuthService {
 
   // Discord Webhook の保存
   async saveDiscordWebhook(userId: string, webhookUrl: string) {
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id: userId },
       data: { discordWebhook: webhookUrl },
     });
@@ -126,7 +126,7 @@ export class AuthService {
 
   // メール認証完了
   async verifyEmail(userId: string) {
-    return prisma.user.update({
+    return this.prisma.user.update({
       where: { id: userId },
       data: { emailVerified: new Date() },
     });
@@ -134,7 +134,7 @@ export class AuthService {
 
   // 全ユーザー取得（管理用）
   async findAll() {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       select: {
         id: true,
         email: true,

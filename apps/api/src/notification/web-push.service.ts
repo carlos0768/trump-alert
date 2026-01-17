@@ -1,56 +1,103 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import * as webpush from 'web-push';
 
 interface PushPayload {
   title: string;
   body: string;
   icon?: string;
   url?: string;
+  badge?: string;
+  tag?: string;
 }
 
-interface PushSubscriptionLike {
+interface PushSubscription {
   endpoint: string;
-  keys?: {
-    p256dh?: string;
-    auth?: string;
+  keys: {
+    p256dh: string;
+    auth: string;
   };
 }
 
 @Injectable()
-export class WebPushService {
+export class WebPushService implements OnModuleInit {
   private readonly logger = new Logger(WebPushService.name);
 
-  // VAPID keys should be set in environment variables
   private readonly vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
   private readonly vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
   private readonly vapidEmail =
     process.env.VAPID_EMAIL || 'mailto:admin@trumpalert.app';
 
-  async send(subscription: unknown, payload: PushPayload): Promise<void> {
+  onModuleInit() {
+    if (this.vapidPublicKey && this.vapidPrivateKey) {
+      webpush.setVapidDetails(
+        this.vapidEmail,
+        this.vapidPublicKey,
+        this.vapidPrivateKey
+      );
+      this.logger.log('Web Push VAPID keys configured successfully');
+    } else {
+      this.logger.warn(
+        'VAPID keys not configured - Web Push notifications disabled'
+      );
+    }
+  }
+
+  async send(subscription: unknown, payload: PushPayload): Promise<boolean> {
     if (!this.vapidPublicKey || !this.vapidPrivateKey) {
       this.logger.warn('VAPID keys not configured, skipping web push');
-      return;
+      return false;
     }
 
-    if (!subscription || typeof subscription !== 'object') {
+    if (!this.isValidSubscription(subscription)) {
       this.logger.warn('Invalid subscription object');
-      return;
+      return false;
     }
 
-    const sub = subscription as PushSubscriptionLike;
-    if (!sub.endpoint) {
-      this.logger.warn('No endpoint in subscription');
-      return;
-    }
+    try {
+      const notificationPayload = JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        icon: payload.icon || '/icon-192.png',
+        badge: payload.badge || '/badge-72.png',
+        url: payload.url || '/',
+        tag: payload.tag || 'trump-alert',
+        timestamp: Date.now(),
+      });
 
-    // For now, log the push notification (web-push package needs to be installed)
-    this.logger.log(
-      `Would send push notification to ${sub.endpoint}: ${payload.title}`
+      await webpush.sendNotification(
+        subscription as PushSubscription,
+        notificationPayload
+      );
+
+      this.logger.log(`Push notification sent to ${subscription.endpoint}`);
+      return true;
+    } catch (error: unknown) {
+      const err = error as { statusCode?: number; message?: string };
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        // Subscription has expired or is no longer valid
+        this.logger.warn(
+          `Subscription expired or invalid: ${subscription.endpoint}`
+        );
+        return false;
+      }
+
+      this.logger.error(`Failed to send push notification: ${err.message}`);
+      throw error;
+    }
+  }
+
+  private isValidSubscription(sub: unknown): sub is PushSubscription {
+    if (!sub || typeof sub !== 'object') return false;
+    const subscription = sub as Record<string, unknown>;
+    return (
+      typeof subscription.endpoint === 'string' &&
+      subscription.endpoint.length > 0 &&
+      typeof subscription.keys === 'object' &&
+      subscription.keys !== null &&
+      typeof (subscription.keys as Record<string, unknown>).p256dh ===
+        'string' &&
+      typeof (subscription.keys as Record<string, unknown>).auth === 'string'
     );
-
-    // TODO: When web-push is installed, uncomment the following:
-    // const webpush = require('web-push');
-    // webpush.setVapidDetails(this.vapidEmail, this.vapidPublicKey, this.vapidPrivateKey);
-    // await webpush.sendNotification(subscription, JSON.stringify(payload));
   }
 
   getVapidPublicKey(): string | undefined {

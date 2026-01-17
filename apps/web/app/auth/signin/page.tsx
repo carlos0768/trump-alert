@@ -7,25 +7,52 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+// Email validation regex
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 export default function SignInPage() {
   const router = useRouter();
   const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const validateEmail = (value: string): boolean => {
+    if (!value) {
+      setValidationError('メールアドレスを入力してください');
+      return false;
+    }
+    if (!EMAIL_REGEX.test(value)) {
+      setValidationError(
+        '有効なメールアドレスを入力してください（例: user@example.com）'
+      );
+      return false;
+    }
+    setValidationError(null);
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
 
+    if (!validateEmail(email)) {
+      return;
+    }
+
     try {
       const result = await login(email);
-      if (result.loginToken) {
-        // Development mode: auto-redirect
-        router.push('/');
-      } else {
+      if (result.emailSent) {
+        // Email was sent - show confirmation message
         setMessage(
-          'ログインリンクをメールに送信しました。メールを確認してください。'
+          'ログインリンクをメールに送信しました。メール内のリンクをクリックしてログインしてください。'
         );
+      } else if (result.loginToken) {
+        // Email not configured - fallback to auto-verify (development mode)
+        setMessage('ログイン成功！リダイレクト中...');
+        setTimeout(() => router.push('/'), 500);
+      } else {
+        setMessage('ログインリンクを生成しました。');
       }
     } catch {
       // Error is handled by useAuth
@@ -49,15 +76,25 @@ export default function SignInPage() {
               メールアドレス
             </label>
             <input
-              type="email"
+              type="text"
               id="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (validationError) validateEmail(e.target.value);
+              }}
+              onBlur={(e) => validateEmail(e.target.value)}
               className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="your@email.com"
+              autoComplete="email"
             />
           </div>
+
+          {validationError && (
+            <div className="p-3 bg-amber-900/50 border border-amber-700 rounded-lg text-amber-300 text-sm">
+              {validationError}
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300 text-sm">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Bell,
@@ -9,6 +9,9 @@ import {
   Shield,
   LogOut,
   ChevronRight,
+  Loader2,
+  Check,
+  X,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,10 +23,92 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import {
+  isPushSupported,
+  getNotificationPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getCurrentSubscription,
+  saveSubscriptionToServer,
+} from '@/lib/push-notifications';
+import { useAuth } from '@/lib/hooks/use-auth';
+import Link from 'next/link';
 
 export default function SettingsPage() {
+  const { user, isAuthenticated, logout } = useAuth();
   const [language, setLanguage] = useState('ja');
   const [theme, setTheme] = useState('light');
+
+  // Push notification state
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState<
+    NotificationPermission | 'unsupported'
+  >('default');
+  const [pushSubscription, setPushSubscription] =
+    useState<PushSubscription | null>(null);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+
+  // Check push notification status on mount
+  useEffect(() => {
+    const checkPushStatus = async () => {
+      const supported = isPushSupported();
+      setPushSupported(supported);
+
+      if (supported) {
+        setPushPermission(getNotificationPermission());
+        const subscription = await getCurrentSubscription();
+        setPushSubscription(subscription);
+      }
+    };
+
+    checkPushStatus();
+  }, []);
+
+  // Handle push notification toggle
+  const handlePushToggle = async () => {
+    setPushLoading(true);
+    setPushError(null);
+
+    try {
+      if (pushSubscription) {
+        // Unsubscribe
+        await unsubscribeFromPush();
+        setPushSubscription(null);
+      } else {
+        // Subscribe
+        const subscription = await subscribeToPush();
+        setPushSubscription(subscription);
+        setPushPermission('granted');
+
+        // TODO: Save to server when user is authenticated
+        // await saveSubscriptionToServer(userId, subscription);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to toggle notifications';
+      setPushError(message);
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  // Test push notification
+  const handleTestPush = async () => {
+    if (!pushSubscription) return;
+
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification('Trump Alert Test', {
+        body: 'Push notifications are working correctly!',
+        icon: '/icon-192.png',
+        badge: '/badge-72.png',
+        tag: 'test-notification',
+      });
+    }
+  };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
@@ -41,21 +126,48 @@ export default function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <Avatar fallback="U" size="xl" />
-            <div>
-              <p className="font-semibold text-gray-900">Guest User</p>
-              <p className="text-sm text-gray-500">guest@example.com</p>
+          {isAuthenticated && user ? (
+            <>
+              <div className="flex items-center gap-4">
+                <Avatar
+                  fallback={user.name?.[0] || user.email[0].toUpperCase()}
+                  size="xl"
+                />
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {user.name || 'ユーザー'}
+                  </p>
+                  <p className="text-sm text-gray-500">{user.email}</p>
+                  {user.emailVerified ? (
+                    <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                      <Check className="size-3" /> 認証済み
+                    </span>
+                  ) : (
+                    <span className="text-xs text-amber-600">未認証</span>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Button variant="outline" size="sm">
+                  Edit Profile
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-500 mb-4">ログインしていません</p>
+              <div className="flex gap-2 justify-center">
+                <Link href="/auth/signin">
+                  <Button variant="outline" size="sm">
+                    ログイン
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button size="sm">新規登録</Button>
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <Button variant="outline" size="sm">
-              Edit Profile
-            </Button>
-            <Button variant="outline" size="sm">
-              Change Password
-            </Button>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -72,17 +184,67 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <SettingRow
-              title="Push Notifications"
-              description="Receive browser push notifications"
-              action={
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="size-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                />
-              }
-            />
+            {/* Push Notifications */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900">Push Notifications</p>
+                <p className="text-sm text-gray-500">
+                  {!pushSupported
+                    ? 'Not supported in this browser'
+                    : pushPermission === 'denied'
+                      ? 'Blocked by browser settings'
+                      : pushSubscription
+                        ? 'Enabled - receiving notifications'
+                        : 'Click to enable browser notifications'}
+                </p>
+                {pushError && (
+                  <p className="mt-1 text-sm text-red-500">{pushError}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {pushLoading ? (
+                  <Loader2 className="size-5 animate-spin text-gray-400" />
+                ) : !pushSupported || pushPermission === 'denied' ? (
+                  <X className="size-5 text-gray-400" />
+                ) : (
+                  <>
+                    <button
+                      onClick={handlePushToggle}
+                      disabled={pushLoading}
+                      className={cn(
+                        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                        pushSubscription ? 'bg-primary-600' : 'bg-gray-200'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                          pushSubscription ? 'translate-x-5' : 'translate-x-0'
+                        )}
+                      />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Test Notification Button */}
+            {pushSubscription && (
+              <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    Test Notifications
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Send a test notification to verify setup
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleTestPush}>
+                  Send Test
+                </Button>
+              </div>
+            )}
+
             <SettingRow
               title="Email Digest"
               description="Daily summary of important news"
@@ -249,10 +411,19 @@ export default function SettingsPage() {
       </Card>
 
       {/* Sign Out */}
-      <Button variant="outline" className="mt-6 w-full gap-2">
-        <LogOut className="size-4" />
-        Sign Out
-      </Button>
+      {isAuthenticated && (
+        <Button
+          variant="outline"
+          className="mt-6 w-full gap-2"
+          onClick={() => {
+            logout();
+            window.location.href = '/';
+          }}
+        >
+          <LogOut className="size-4" />
+          ログアウト
+        </Button>
+      )}
     </div>
   );
 }

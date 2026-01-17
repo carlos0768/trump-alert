@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface ComparisonArticle {
   id: string;
@@ -26,6 +24,8 @@ export interface ComparisonPair {
 
 @Injectable()
 export class FactCheckService {
+  constructor(private prisma: PrismaService) {}
+
   // 左派メディアリスト
   private leftSources = [
     'CNN',
@@ -67,7 +67,7 @@ export class FactCheckService {
    */
   async getFactCheckComparisons(limit = 10): Promise<ComparisonPair[]> {
     // 最近の記事からタグを取得
-    const recentArticlesWithTags = await prisma.article.findMany({
+    const recentArticlesWithTags = await this.prisma.article.findMany({
       where: {
         publishedAt: {
           gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 過去7日間
@@ -97,7 +97,7 @@ export class FactCheckService {
 
     for (const article of recentArticlesWithTags) {
       for (const articleTag of article.tags) {
-        const tag = articleTag.tag;
+        const tag = articleTag.tag as { id: string; name: string };
         if (!tagGroups.has(tag.id)) {
           tagGroups.set(tag.id, {
             tagName: tag.name,
@@ -195,7 +195,7 @@ export class FactCheckService {
    * 特定のトピック（タグ名）で比較を取得
    */
   async getComparisonByTopic(topic: string): Promise<ComparisonPair | null> {
-    const tag = await prisma.tag.findFirst({
+    const tag = await this.prisma.tag.findFirst({
       where: {
         name: {
           contains: topic,
@@ -208,7 +208,7 @@ export class FactCheckService {
       return null;
     }
 
-    const articles = await prisma.article.findMany({
+    const articles = await this.prisma.article.findMany({
       where: {
         tags: {
           some: {

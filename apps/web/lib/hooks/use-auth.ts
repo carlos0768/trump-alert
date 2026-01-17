@@ -77,42 +77,6 @@ export function useAuth() {
     [setLoading]
   );
 
-  const login = useCallback(
-    async (email: string) => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch(`${API_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || 'Login failed');
-        }
-
-        // In development, we might get a token directly
-        if (data.loginToken) {
-          // Auto-verify for development
-          await verifyToken(data.loginToken);
-        }
-
-        return data;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Login failed';
-        setError(message);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [setLoading]
-  );
-
   const verifyToken = useCallback(
     async (token: string) => {
       setLoading(true);
@@ -153,6 +117,42 @@ export function useAuth() {
       }
     },
     [setLoading, setUser]
+  );
+
+  const login = useCallback(
+    async (email: string) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+
+        // In development, we might get a token directly
+        if (data.loginToken) {
+          // Auto-verify for development
+          await verifyToken(data.loginToken);
+        }
+
+        return data;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Login failed';
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, verifyToken]
   );
 
   const logout = useCallback(() => {

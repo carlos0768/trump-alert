@@ -39,3 +39,4 @@ packages/database/generated
 
 # Misc
 *.tsbuildinfo
+apps/api/.truth-social-cookies.json
