@@ -1,14 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-// Note: In production, install web-push package:
-// pnpm add web-push
-// For now, we implement a stub that can be replaced
-
 interface PushPayload {
   title: string;
   body: string;
   icon?: string;
   url?: string;
+}
+
+interface PushSubscriptionLike {
+  endpoint: string;
+  keys?: {
+    p256dh?: string;
+    auth?: string;
+  };
 }
 
 @Injectable()
@@ -27,33 +31,26 @@ export class WebPushService {
       return;
     }
 
-    try {
-      // Dynamic import to avoid errors if web-push is not installed
-      const webpush = await import('web-push').catch(() => null);
-
-      if (!webpush) {
-        this.logger.warn(
-          'web-push package not installed, skipping push notification'
-        );
-        return;
-      }
-
-      webpush.setVapidDetails(
-        this.vapidEmail,
-        this.vapidPublicKey,
-        this.vapidPrivateKey
-      );
-
-      await webpush.sendNotification(
-        subscription as webpush.PushSubscription,
-        JSON.stringify(payload)
-      );
-
-      this.logger.log(`Push notification sent successfully`);
-    } catch (error) {
-      this.logger.error('Failed to send push notification:', error);
-      throw error;
+    if (!subscription || typeof subscription !== 'object') {
+      this.logger.warn('Invalid subscription object');
+      return;
     }
+
+    const sub = subscription as PushSubscriptionLike;
+    if (!sub.endpoint) {
+      this.logger.warn('No endpoint in subscription');
+      return;
+    }
+
+    // For now, log the push notification (web-push package needs to be installed)
+    this.logger.log(
+      `Would send push notification to ${sub.endpoint}: ${payload.title}`
+    );
+
+    // TODO: When web-push is installed, uncomment the following:
+    // const webpush = require('web-push');
+    // webpush.setVapidDetails(this.vapidEmail, this.vapidPublicKey, this.vapidPrivateKey);
+    // await webpush.sendNotification(subscription, JSON.stringify(payload));
   }
 
   getVapidPublicKey(): string | undefined {
