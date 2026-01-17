@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Zap, RefreshCw, Loader2 } from 'lucide-react';
 import { ArticleCard } from '@/components/article';
-import { TrumpIndexChart } from '@/components/charts';
+import { TrumpIndexChart, type TrumpIndexDataPoint } from '@/components/charts';
 import {
   TrendingTopics,
   mockTrendingTopics,
