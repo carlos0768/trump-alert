@@ -15,6 +15,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/database/package.json ./packages/database/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -22,9 +23,10 @@ RUN pnpm install --frozen-lockfile
 # Copy source files
 COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
+COPY packages/database ./packages/database
 
 # Generate Prisma client
-RUN cd apps/api && npx prisma generate
+RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
 
 # Build
 RUN pnpm --filter @trump-alert/api build
