@@ -29,11 +29,21 @@ interface TrumpIndexChartProps {
   change: number;
 }
 
+// Helper to normalize data from different sources (API uses hour/avgSentiment, mock uses time/sentiment)
+function normalizeData(data: TrumpIndexDataPoint[]) {
+  return data.map((item) => ({
+    time: item.time ?? item.hour ?? '',
+    sentiment: item.sentiment ?? item.avgSentiment ?? 0,
+    articleCount: item.articleCount,
+  }));
+}
+
 export function TrumpIndexChart({
   data,
   currentIndex,
   change,
 }: TrumpIndexChartProps) {
+  const normalizedData = normalizeData(data);
   const isPositive = change > 0;
   const isNeutral = change === 0;
 
