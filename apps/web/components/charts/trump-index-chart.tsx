@@ -15,9 +15,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface TrumpIndexDataPoint {
-  time: string;
-  sentiment: number;
+export interface TrumpIndexDataPoint {
+  time?: string;
+  hour?: string;
+  sentiment?: number;
+  avgSentiment?: number;
   articleCount: number;
 }
 
