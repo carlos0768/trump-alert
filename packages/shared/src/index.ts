@@ -1,8 +1,8 @@
 // Types
-export * from './types';
+export * from './types/index';
 
 // Prompts
-export * from './prompts';
+export * from './prompts/index';
 
 // Constants
-export * from './constants';
+export * from './constants/index';

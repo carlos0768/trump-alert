@@ -12,12 +12,13 @@ import {
   Share,
   Clock,
   Globe,
+  Loader2,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ImpactBadge, BiasBadge, SentimentBadge } from '@/components/ui/badge';
-import { mockArticles } from '@/lib/mock-data';
+import { useArticle, useRelatedArticles } from '@/lib/hooks';
 import { formatRelativeTime, formatNumber } from '@/lib/utils';
 
 interface ArticlePageProps {
@@ -26,15 +27,36 @@ interface ArticlePageProps {
 
 export default function ArticlePage({ params }: ArticlePageProps) {
   const { id } = use(params);
-  const article = mockArticles.find((a) => a.id === id) ?? mockArticles[0];
+  const { data: article, isLoading, error } = useArticle(id);
+  const { data: relatedArticles } = useRelatedArticles(id);
 
-  if (!article) {
+  if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-gray-500">Article not found</p>
+        <Loader2 className="size-8 animate-spin text-gray-400" />
       </div>
     );
   }
+
+  if (error || !article) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4">
+        <p className="text-gray-500">Article not found</p>
+        <Link href="/">
+          <Button variant="outline">Back to Feed</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const publishedAt =
+    typeof article.publishedAt === 'string'
+      ? new Date(article.publishedAt)
+      : article.publishedAt;
+
+  // Prefer Japanese if available
+  const displayTitle = article.titleJa || article.title;
+  const displayContent = article.contentJa || article.content;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
@@ -50,7 +72,6 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       {/* Article Header */}
       <div className="flex items-start gap-4">
         <Avatar
-          src={article.sourceIcon}
           alt={article.source}
           fallback={article.source.charAt(0)}
           size="lg"
@@ -61,7 +82,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
               {article.source}
             </span>
             <span className="text-sm text-gray-500">
-              {formatRelativeTime(article.publishedAt)}
+              {formatRelativeTime(publishedAt)}
             </span>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -76,7 +97,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
 
       {/* Title */}
       <h1 className="mt-6 text-balance text-2xl font-bold leading-tight text-gray-900">
-        {article.title}
+        {displayTitle}
       </h1>
 
       {/* Metadata */}
@@ -84,7 +105,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         <div className="flex items-center gap-1.5">
           <Clock className="size-4" />
           <span>
-            {article.publishedAt.toLocaleDateString('ja-JP', {
+            {publishedAt.toLocaleDateString('ja-JP', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -118,29 +139,31 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       )}
 
       {/* AI Summary */}
-      <Card className="mt-6">
-        <CardContent className="pt-4">
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-            <span className="flex size-5 items-center justify-center rounded bg-primary-100 text-xs text-primary-700">
-              AI
-            </span>
-            Summary
-          </h2>
-          <ul className="space-y-2">
-            {article.summary.map((point, idx) => (
-              <li key={idx} className="flex items-start gap-3 text-gray-700">
-                <span className="mt-2 size-1.5 flex-shrink-0 rounded-full bg-primary-400" />
-                <span className="text-pretty">{point}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {article.summary && article.summary.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="pt-4">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <span className="flex size-5 items-center justify-center rounded bg-primary-100 text-xs text-primary-700">
+                AI
+              </span>
+              Summary
+            </h2>
+            <ul className="space-y-2">
+              {article.summary.map((point, idx) => (
+                <li key={idx} className="flex items-start gap-3 text-gray-700">
+                  <span className="mt-2 size-1.5 flex-shrink-0 rounded-full bg-primary-400" />
+                  <span className="text-pretty">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Content */}
       <div className="mt-6">
-        <p className="text-pretty leading-relaxed text-gray-700">
-          {article.content}
+        <p className="text-pretty leading-relaxed text-gray-700 whitespace-pre-wrap">
+          {displayContent}
         </p>
       </div>
 
@@ -165,21 +188,15 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         <div className="flex items-center gap-6">
           <button className="flex items-center gap-2 text-gray-500 hover:text-primary-600">
             <MessageCircle className="size-5" />
-            <span className="tabular-nums">
-              {formatNumber(article.stats.comments)}
-            </span>
+            <span className="tabular-nums">0</span>
           </button>
           <button className="flex items-center gap-2 text-gray-500 hover:text-green-600">
             <Repeat2 className="size-5" />
-            <span className="tabular-nums">
-              {formatNumber(article.stats.reposts)}
-            </span>
+            <span className="tabular-nums">0</span>
           </button>
           <button className="flex items-center gap-2 text-gray-500 hover:text-red-500">
             <Heart className="size-5" />
-            <span className="tabular-nums">
-              {formatNumber(article.stats.likes)}
-            </span>
+            <span className="tabular-nums">0</span>
           </button>
         </div>
         <div className="flex items-center gap-2">
@@ -193,15 +210,13 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       </div>
 
       {/* Related Articles */}
-      <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Related Articles
-        </h2>
-        <div className="space-y-3">
-          {mockArticles
-            .filter((a) => a.id !== article.id)
-            .slice(0, 3)
-            .map((related) => (
+      {relatedArticles && relatedArticles.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Related Articles
+          </h2>
+          <div className="space-y-3">
+            {relatedArticles.slice(0, 3).map((related) => (
               <Link
                 key={related.id}
                 href={`/article/${related.id}`}
@@ -210,7 +225,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 <div className="flex items-start gap-3">
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 line-clamp-2">
-                      {related.title}
+                      {related.titleJa || related.title}
                     </p>
                     <p className="mt-1 text-sm text-gray-500">
                       {related.source} &middot;{' '}
@@ -221,8 +236,9 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 </div>
               </Link>
             ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

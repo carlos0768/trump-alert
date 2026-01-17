@@ -10,6 +10,8 @@ import {
   fetchTrendingTopics,
   fetchDailyStats,
   fetchSources,
+  fetchWeeklyStats,
+  fetchAnalyticsOverview,
   ArticleFilters,
 } from '../api';
 
@@ -85,5 +87,23 @@ export function useSources() {
     queryKey: ['sources'],
     queryFn: fetchSources,
     staleTime: 3600000, // Consider stale after 1 hour
+  });
+}
+
+// Fetch weekly stats
+export function useWeeklyStats() {
+  return useQuery({
+    queryKey: ['weeklyStats'],
+    queryFn: fetchWeeklyStats,
+    refetchInterval: 300000,
+  });
+}
+
+// Fetch analytics overview
+export function useAnalyticsOverview() {
+  return useQuery({
+    queryKey: ['analyticsOverview'],
+    queryFn: fetchAnalyticsOverview,
+    refetchInterval: 300000,
   });
 }

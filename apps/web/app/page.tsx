@@ -1,29 +1,85 @@
 'use client';
 
 import { useState } from 'react';
-import { Zap, RefreshCw } from 'lucide-react';
+import { Zap, RefreshCw, Loader2 } from 'lucide-react';
 import { ArticleCard } from '@/components/article';
 import { TrumpIndexChart } from '@/components/charts';
 import {
   TrendingTopics,
   mockTrendingTopics,
   StockWidget,
-  mockStockData,
   FilterBar,
 } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockArticles, mockTrumpIndexData } from '@/lib/mock-data';
+import {
+  useArticles,
+  useTrumpIndex,
+  useStockData,
+  useTrendingTopics,
+} from '@/lib/hooks';
+import { mockTrumpIndexData } from '@/lib/mock-data';
+import type { ArticleFilters } from '@/lib/api';
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('all');
+  const [filters, setFilters] = useState<ArticleFilters>({});
 
-  // Calculate current Trump Index
-  const currentIndex =
-    mockTrumpIndexData[mockTrumpIndexData.length - 1]?.sentiment ?? 0;
-  const previousIndex =
-    mockTrumpIndexData[mockTrumpIndexData.length - 2]?.sentiment ?? 0;
+  // Fetch real data from API with filters
+  const {
+    data: articlesData,
+    isLoading: articlesLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchArticles,
+  } = useArticles(filters);
+
+  const { data: trumpIndexData, isLoading: indexLoading } = useTrumpIndex();
+  const { data: stockData, isLoading: stockLoading } = useStockData();
+  const { data: trendingTopics, isLoading: topicsLoading } =
+    useTrendingTopics();
+
+  // Flatten paginated articles
+  const articles = articlesData?.pages.flatMap((page) => page.articles) ?? [];
+
+  // Calculate current Trump Index (use mock data as fallback)
+  const indexData =
+    trumpIndexData && trumpIndexData.length > 0
+      ? trumpIndexData
+      : mockTrumpIndexData;
+  const currentIndex = indexData[indexData.length - 1]?.sentiment ?? 0;
+  const previousIndex = indexData[indexData.length - 2]?.sentiment ?? 0;
   const indexChange = currentIndex - previousIndex;
+
+  // Stock data with fallback
+  const stock = stockData ?? {
+    symbol: 'DJT',
+    price: 34.56,
+    change: 2.34,
+    changePercent: 7.26,
+    volume: 12500000,
+  };
+
+  // Trending topics with fallback
+  const topics =
+    trendingTopics && trendingTopics.length > 0
+      ? trendingTopics.map((t, i) => ({ ...t, rank: i + 1 }))
+      : mockTrendingTopics;
+
+  // Handle filter changes
+  const handleFilterChange = (newFilters: {
+    impactLevels: string[];
+    biases: string[];
+    timeRange: string;
+  }) => {
+    setFilters({
+      impactLevels:
+        newFilters.impactLevels.length > 0
+          ? newFilters.impactLevels
+          : undefined,
+      biases: newFilters.biases.length > 0 ? newFilters.biases : undefined,
+      timeRange: newFilters.timeRange,
+    });
+  };
 
   return (
     <div className="flex h-full">
@@ -31,10 +87,14 @@ export default function DashboardPage() {
       <div className="flex-1 overflow-y-auto border-r border-gray-200">
         {/* Feed Header */}
         <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">Live Feed</h1>
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon-sm">
+              <h1 className="text-xl font-bold text-gray-900">Live Feed</h1>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => refetchArticles()}
+              >
                 <RefreshCw className="size-4" />
               </Button>
               <Button size="sm" className="gap-1.5">
@@ -42,35 +102,53 @@ export default function DashboardPage() {
                 <span>Live</span>
               </Button>
             </div>
-          </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-3">
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="breaking">Breaking</TabsTrigger>
-              <TabsTrigger value="social">Social</TabsTrigger>
-              <TabsTrigger value="market">Market</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          {/* Filter Bar */}
-          <div className="mt-3">
-            <FilterBar />
+            {/* Filter Bar - Right aligned */}
+            <div className="flex-1 flex justify-end">
+              <FilterBar onFilterChange={handleFilterChange} />
+            </div>
           </div>
         </div>
 
         {/* Articles Feed */}
         <div className="divide-y divide-gray-100">
-          {mockArticles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))}
+          {articlesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="size-8 animate-spin text-gray-400" />
+            </div>
+          ) : articles.length > 0 ? (
+            articles.map((article) => (
+              <ArticleCard key={article.id} article={article} />
+            ))
+          ) : (
+            <div className="py-12 text-center text-gray-500">
+              <p>まだ記事がありません</p>
+              <p className="mt-2 text-sm">
+                ニュースを収集するには、APIの /api/collect
+                エンドポイントを呼び出してください
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Load More */}
         <div className="p-4">
-          <Button variant="outline" className="w-full">
-            Load More
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => fetchNextPage()}
+            disabled={!hasNextPage || isFetchingNextPage}
+          >
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Loading...
+              </>
+            ) : hasNextPage ? (
+              'Load More'
+            ) : (
+              'No more articles'
+            )}
           </Button>
         </div>
       </div>
@@ -79,17 +157,35 @@ export default function DashboardPage() {
       <aside className="hidden w-80 flex-shrink-0 overflow-y-auto p-4 xl:block">
         <div className="space-y-4">
           {/* Trump Index Chart */}
-          <TrumpIndexChart
-            data={mockTrumpIndexData}
-            currentIndex={currentIndex}
-            change={indexChange}
-          />
+          {indexLoading ? (
+            <div className="flex h-48 items-center justify-center rounded-lg bg-white">
+              <Loader2 className="size-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <TrumpIndexChart
+              data={indexData}
+              currentIndex={currentIndex}
+              change={indexChange}
+            />
+          )}
 
           {/* DJT Stock Widget */}
-          <StockWidget stock={mockStockData} />
+          {stockLoading ? (
+            <div className="flex h-24 items-center justify-center rounded-lg bg-white">
+              <Loader2 className="size-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <StockWidget stock={stock} />
+          )}
 
           {/* Trending Topics */}
-          <TrendingTopics topics={mockTrendingTopics} />
+          {topicsLoading ? (
+            <div className="flex h-48 items-center justify-center rounded-lg bg-white">
+              <Loader2 className="size-6 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            <TrendingTopics topics={topics} />
+          )}
 
           {/* Footer Links */}
           <div className="text-center text-xs text-gray-400">

@@ -3,9 +3,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export interface Article {
   id: string;
   title: string;
+  titleJa?: string;
   url: string;
   source: string;
   content: string;
+  contentJa?: string;
   publishedAt: string;
   imageUrl?: string;
   summary: string[];
@@ -47,6 +49,28 @@ export interface TrendingTopic {
   rank: number;
   name: string;
   count: number;
+}
+
+export interface WeeklyData {
+  day: string;
+  date: string;
+  articles: number;
+  sentiment: number;
+}
+
+export interface SourceDistribution {
+  name: string;
+  value: number;
+  count: number;
+  color: string;
+}
+
+export interface AnalyticsOverview {
+  totalArticles: number;
+  weeklyArticles: number;
+  avgSentiment: number;
+  sourcesTracked: number;
+  sourceDistribution: SourceDistribution[];
 }
 
 // Fetch articles with optional filters
@@ -191,6 +215,32 @@ export async function fetchSources(): Promise<
 
   if (!res.ok) {
     return [];
+  }
+
+  return res.json();
+}
+
+// Fetch weekly stats
+export async function fetchWeeklyStats(): Promise<WeeklyData[]> {
+  const res = await fetch(`${API_URL}/api/stats/weekly`, {
+    next: { revalidate: 300 },
+  });
+
+  if (!res.ok) {
+    return [];
+  }
+
+  return res.json();
+}
+
+// Fetch analytics overview
+export async function fetchAnalyticsOverview(): Promise<AnalyticsOverview | null> {
+  const res = await fetch(`${API_URL}/api/stats/analytics-overview`, {
+    next: { revalidate: 300 },
+  });
+
+  if (!res.ok) {
+    return null;
   }
 
   return res.json();

@@ -15,9 +15,10 @@ export function formatNumber(num: number): string {
   return num.toString();
 }
 
-export function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
+  const diffMs = now.getTime() - d.getTime();
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHour = Math.floor(diffMin / 60);
@@ -28,7 +29,7 @@ export function formatRelativeTime(date: Date): string {
   if (diffHour < 24) return `${diffHour}h`;
   if (diffDay < 7) return `${diffDay}d`;
 
-  return date.toLocaleDateString('ja-JP', {
+  return d.toLocaleDateString('ja-JP', {
     month: 'short',
     day: 'numeric',
   });

@@ -20,6 +20,7 @@ import {
   Newspaper,
   BarChart3,
   Activity,
+  Loader2,
 } from 'lucide-react';
 import {
   Card,
@@ -28,67 +29,72 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-
-const weeklyData = [
-  { day: 'Mon', articles: 145, sentiment: 0.12 },
-  { day: 'Tue', articles: 182, sentiment: -0.08 },
-  { day: 'Wed', articles: 156, sentiment: 0.25 },
-  { day: 'Thu', articles: 203, sentiment: 0.18 },
-  { day: 'Fri', articles: 178, sentiment: -0.15 },
-  { day: 'Sat', articles: 92, sentiment: 0.32 },
-  { day: 'Sun', articles: 78, sentiment: 0.05 },
-];
-
-const sourceDistribution = [
-  { name: 'Fox News', value: 28, color: '#dc2626' },
-  { name: 'CNN', value: 24, color: '#3b82f6' },
-  { name: 'Truth Social', value: 18, color: '#8b5cf6' },
-  { name: 'BBC', value: 12, color: '#6b7280' },
-  { name: 'Reuters', value: 10, color: '#f97316' },
-  { name: 'Others', value: 8, color: '#d1d5db' },
-];
-
-const topicBreakdown = [
-  { topic: 'Election', count: 342, change: 15 },
-  { topic: 'Tariff', count: 256, change: 28 },
-  { topic: 'Trial', count: 198, change: -12 },
-  { topic: 'Immigration', count: 167, change: 8 },
-  { topic: 'Economy', count: 145, change: -5 },
-];
+import {
+  useWeeklyStats,
+  useAnalyticsOverview,
+  useTrendingTopics,
+} from '@/lib/hooks';
 
 export default function AnalyticsPage() {
+  const { data: weeklyData, isLoading: weeklyLoading } = useWeeklyStats();
+  const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview();
+  const { data: trendingTopics, isLoading: topicsLoading } =
+    useTrendingTopics();
+
+  const isLoading = weeklyLoading || overviewLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Insights and trends from Trump-related news coverage
+        トランプ関連ニュースの分析とトレンド
       </p>
 
       {/* Stats Overview */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Articles"
-          value="1,234"
-          change={12}
+          title="総記事数"
+          value={overview?.totalArticles.toLocaleString() || '0'}
+          subtext={`今週: ${overview?.weeklyArticles || 0}件`}
           icon={Newspaper}
         />
         <StatCard
-          title="Avg Sentiment"
-          value="+0.15"
-          change={8}
+          title="平均センチメント"
+          value={
+            (overview?.avgSentiment || 0) >= 0
+              ? `+${(overview?.avgSentiment || 0).toFixed(2)}`
+              : (overview?.avgSentiment || 0).toFixed(2)
+          }
+          subtext={
+            overview?.avgSentiment && overview.avgSentiment >= 0
+              ? 'ポジティブ傾向'
+              : 'ネガティブ傾向'
+          }
           icon={Activity}
-          valueColor="text-green-600"
+          valueColor={
+            overview?.avgSentiment && overview.avgSentiment >= 0
+              ? 'text-green-600'
+              : 'text-red-600'
+          }
         />
         <StatCard
-          title="Sources Tracked"
-          value="24"
-          change={2}
+          title="追跡ソース"
+          value={overview?.sourcesTracked.toString() || '0'}
+          subtext="ニュースソース"
           icon={BarChart3}
         />
         <StatCard
-          title="Active Alerts"
-          value="8"
-          change={-1}
+          title="今週の記事"
+          value={overview?.weeklyArticles.toLocaleString() || '0'}
+          subtext="過去7日間"
           icon={TrendingUp}
         />
       </div>
@@ -98,38 +104,45 @@ export default function AnalyticsPage() {
         {/* Weekly Trend */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Weekly Article Volume</CardTitle>
-            <CardDescription>Number of articles per day</CardDescription>
+            <CardTitle className="text-lg">週間記事数</CardTitle>
+            <CardDescription>1日あたりの記事数</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                    }}
-                  />
-                  <Bar
-                    dataKey="articles"
-                    fill="#6366f1"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {weeklyData && weeklyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                      }}
+                      formatter={(value: number) => [`${value}件`, '記事数']}
+                    />
+                    <Bar
+                      dataKey="articles"
+                      fill="#6366f1"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-gray-400">
+                  データがありません
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -137,41 +150,51 @@ export default function AnalyticsPage() {
         {/* Sentiment Trend */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Sentiment Trend</CardTitle>
-            <CardDescription>Average daily sentiment score</CardDescription>
+            <CardTitle className="text-lg">センチメント推移</CardTitle>
+            <CardDescription>日別平均センチメントスコア</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                  />
-                  <YAxis
-                    domain={[-1, 1]}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="sentiment"
-                    stroke="#22c55e"
-                    strokeWidth={2}
-                    dot={{ fill: '#22c55e', strokeWidth: 2 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {weeklyData && weeklyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weeklyData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <YAxis
+                      domain={[-1, 1]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                      }}
+                      formatter={(value: number) => [
+                        value.toFixed(2),
+                        'センチメント',
+                      ]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="sentiment"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      dot={{ fill: '#22c55e', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-gray-400">
+                  データがありません
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -182,108 +205,113 @@ export default function AnalyticsPage() {
         {/* Source Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Source Distribution</CardTitle>
-            <CardDescription>Coverage by news source</CardDescription>
+            <CardTitle className="text-lg">ソース別分布</CardTitle>
+            <CardDescription>ニュースソース別のカバレッジ</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-8">
-              <div className="h-48 w-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={sourceDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {sourceDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex-1 space-y-2">
-                {sourceDistribution.map((source) => (
-                  <div
-                    key={source.name}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="size-3 rounded-full"
-                        style={{ backgroundColor: source.color }}
+            {overview?.sourceDistribution &&
+            overview.sourceDistribution.length > 0 ? (
+              <div className="flex items-center gap-8">
+                <div className="h-48 w-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={overview.sourceDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={70}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {overview.sourceDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => [`${value}%`, '割合']}
                       />
-                      <span className="text-sm text-gray-700">
-                        {source.name}
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium tabular-nums text-gray-900">
-                      {source.value}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Topic Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Top Topics</CardTitle>
-            <CardDescription>Most discussed topics this week</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topicBreakdown.map((topic, index) => (
-                <div key={topic.topic} className="flex items-center gap-4">
-                  <span className="w-6 text-center text-sm font-medium text-gray-400">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">
-                        #{topic.topic}
-                      </span>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 space-y-2">
+                  {overview.sourceDistribution.map((source) => (
+                    <div
+                      key={source.name}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
-                        <span className="text-sm tabular-nums text-gray-600">
-                          {topic.count} articles
+                        <div
+                          className="size-3 rounded-full"
+                          style={{ backgroundColor: source.color }}
+                        />
+                        <span className="text-sm text-gray-700">
+                          {source.name}
                         </span>
-                        <span
-                          className={`flex items-center text-xs font-medium ${
-                            topic.change > 0
-                              ? 'text-green-600'
-                              : topic.change < 0
-                                ? 'text-red-600'
-                                : 'text-gray-500'
-                          }`}
-                        >
-                          {topic.change > 0 ? (
-                            <TrendingUp className="mr-0.5 size-3" />
-                          ) : topic.change < 0 ? (
-                            <TrendingDown className="mr-0.5 size-3" />
-                          ) : null}
-                          {Math.abs(topic.change)}%
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">
+                          {source.count}件
+                        </span>
+                        <span className="text-sm font-medium tabular-nums text-gray-900">
+                          {source.value}%
                         </span>
                       </div>
                     </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-gray-100">
-                      <div
-                        className="h-full rounded-full bg-primary-500"
-                        style={{
-                          width: `${(topic.count / topicBreakdown[0].count) * 100}%`,
-                        }}
-                      />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-48 items-center justify-center text-gray-400">
+                データがありません
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Topics */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">トップトピック</CardTitle>
+            <CardDescription>今週最も議論されたトピック</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {trendingTopics && trendingTopics.length > 0 ? (
+              <div className="space-y-4">
+                {trendingTopics.slice(0, 5).map((topic, index) => (
+                  <div key={topic.name} className="flex items-center gap-4">
+                    <span className="w-6 text-center text-sm font-medium text-gray-400">
+                      {index + 1}
+                    </span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-900">
+                          #{topic.name}
+                        </span>
+                        <span className="text-sm tabular-nums text-gray-600">
+                          {topic.count} 記事
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className="h-full rounded-full bg-primary-500"
+                          style={{
+                            width: `${(topic.count / (trendingTopics[0]?.count || 1)) * 100}%`,
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-48 items-center justify-center text-gray-400">
+                <div className="text-center">
+                  <p>トピックデータがありません</p>
+                  <p className="mt-1 text-xs">タグ機能の実装が必要です</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -294,18 +322,16 @@ export default function AnalyticsPage() {
 function StatCard({
   title,
   value,
-  change,
+  subtext,
   icon: Icon,
   valueColor = 'text-gray-900',
 }: {
   title: string;
   value: string;
-  change: number;
+  subtext: string;
   icon: React.ElementType;
   valueColor?: string;
 }) {
-  const isPositive = change >= 0;
-
   return (
     <Card>
       <CardContent className="py-4">
@@ -313,23 +339,12 @@ function StatCard({
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary-100">
             <Icon className="size-5 text-primary-600" />
           </div>
-          <span
-            className={`flex items-center text-sm font-medium ${
-              isPositive ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {isPositive ? (
-              <TrendingUp className="mr-0.5 size-3" />
-            ) : (
-              <TrendingDown className="mr-0.5 size-3" />
-            )}
-            {Math.abs(change)}%
-          </span>
         </div>
         <p className={`mt-3 text-2xl font-bold tabular-nums ${valueColor}`}>
           {value}
         </p>
         <p className="text-sm text-gray-500">{title}</p>
+        <p className="mt-1 text-xs text-gray-400">{subtext}</p>
       </CardContent>
     </Card>
   );

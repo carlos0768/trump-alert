@@ -17,17 +17,19 @@ import { cn, formatNumber, formatRelativeTime } from '@/lib/utils';
 export interface Article {
   id: string;
   title: string;
+  titleJa?: string;
   url: string;
   source: string;
   sourceIcon?: string;
   content: string;
-  publishedAt: Date;
+  contentJa?: string;
+  publishedAt: Date | string;
   imageUrl?: string;
   summary: string[];
   sentiment: number | null;
   bias: 'Left' | 'Center' | 'Right' | null;
   impactLevel: 'S' | 'A' | 'B' | 'C';
-  stats: {
+  stats?: {
     comments: number;
     reposts: number;
     likes: number;
@@ -40,6 +42,10 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
+  // Prefer Japanese if available
+  const displayTitle = article.titleJa || article.title;
+  const displayContent = article.contentJa || article.content;
+
   return (
     <article className="border-b border-gray-100 bg-white px-4 py-4 transition-colors hover:bg-gray-50">
       <div className="flex gap-3">
@@ -78,15 +84,15 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
             </button>
           </div>
 
-          {/* Title */}
+          {/* Title - Japanese preferred */}
           <Link href={`/article/${article.id}`} className="group mt-1 block">
             <h2 className="text-balance text-base font-medium leading-snug text-gray-900 group-hover:text-primary-600">
-              {article.title}
+              {displayTitle}
             </h2>
           </Link>
 
-          {/* Summary */}
-          {article.summary.length > 0 && (
+          {/* Summary or Content Preview - Japanese preferred */}
+          {article.summary && article.summary.length > 0 ? (
             <ul className="mt-2 space-y-1">
               {article.summary.map((point, idx) => (
                 <li
@@ -98,7 +104,11 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
                 </li>
               ))}
             </ul>
-          )}
+          ) : displayContent ? (
+            <p className="mt-2 text-pretty text-sm leading-relaxed text-gray-600 line-clamp-3">
+              {displayContent}
+            </p>
+          ) : null}
 
           {/* Image */}
           {showImage && article.imageUrl && (
@@ -124,9 +134,12 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
 
           {/* Actions */}
           <div className="mt-3 flex items-center justify-between max-w-md">
-            <ActionButton icon={MessageCircle} count={article.stats.comments} />
-            <ActionButton icon={Repeat2} count={article.stats.reposts} />
-            <ActionButton icon={Heart} count={article.stats.likes} />
+            <ActionButton
+              icon={MessageCircle}
+              count={article.stats?.comments ?? 0}
+            />
+            <ActionButton icon={Repeat2} count={article.stats?.reposts ?? 0} />
+            <ActionButton icon={Heart} count={article.stats?.likes ?? 0} />
             <ActionButton icon={Bookmark} />
             <ActionButton icon={Share} />
           </div>
