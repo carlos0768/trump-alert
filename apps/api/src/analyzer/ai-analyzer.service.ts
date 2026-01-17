@@ -163,6 +163,10 @@ export class AIAnalyzerService {
       ]);
 
       const result: AnalysisResult = {
+        id: articleId,
+        title: article.title,
+        content: article.content,
+        source: article.source,
         titleJa,
         contentJa,
         summary,
