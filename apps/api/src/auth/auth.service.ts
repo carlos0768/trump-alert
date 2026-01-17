@@ -15,7 +15,6 @@ export interface CreateUserDto {
 
 export interface UpdateUserDto {
   name?: string;
-  pushSubscription?: unknown;
   discordWebhook?: string;
   language?: 'ja' | 'en';
 }
