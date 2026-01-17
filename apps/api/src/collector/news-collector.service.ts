@@ -4,6 +4,8 @@ import Parser from 'rss-parser';
 import { createHash } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
+import { StreamService } from '../stream/stream.service';
+import { AlertService } from '../alert/alert.service';
 
 const prisma = new PrismaClient();
 const parser = new Parser();
