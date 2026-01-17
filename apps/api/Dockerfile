@@ -24,7 +24,7 @@ COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
 
 # Generate Prisma client
-RUN cd apps/api && pnpm prisma generate
+RUN cd apps/api && npx prisma generate
 
 # Build
 RUN pnpm --filter @trump-alert/api build
