@@ -1,11 +1,47 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Search, Bell } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 export function Header() {
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY;
+
+      // Only hide/show on mobile (lg breakpoint = 1024px)
+      if (window.innerWidth < 1024) {
+        // Scrolling down more than 10px -> hide
+        if (scrollDelta > 10 && currentScrollY > 60) {
+          setIsVisible(false);
+        }
+        // Scrolling up more than 10px -> show
+        else if (scrollDelta < -10) {
+          setIsVisible(true);
+        }
+      } else {
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
-    <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 pl-16 lg:px-6 lg:pl-6">
+    <header
+      className={cn(
+        'flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 pl-16 transition-transform duration-300 lg:px-6 lg:pl-6 lg:translate-y-0',
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      )}
+    >
       {/* Search */}
       <div className="flex flex-1 items-center justify-center px-4 lg:justify-start">
         <div className="relative w-full max-w-md">
