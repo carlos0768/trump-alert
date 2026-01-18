@@ -16,19 +16,12 @@ const sizeClasses = {
 export function TrumpSpinner({ size = 'md', className }: TrumpSpinnerProps) {
   return (
     <div className={cn('flex items-center justify-center', className)}>
-      <div
-        className={cn(
-          sizeClasses[size],
-          'animate-spin rounded-full overflow-hidden border-2 border-primary-500'
-        )}
+      <img
+        src="/trump-face.png"
+        alt="Loading..."
+        className={cn(sizeClasses[size], 'animate-spin')}
         style={{ animationDuration: '1s' }}
-      >
-        <img
-          src="/trump-face.png"
-          alt="Loading..."
-          className="size-full object-cover"
-        />
-      </div>
+      />
     </div>
   );
 }
