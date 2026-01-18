@@ -12,13 +12,13 @@ import {
   Share,
   Clock,
   Globe,
-  Loader2,
   User,
   Scale,
   FileText,
   Building2,
   HelpCircle,
 } from 'lucide-react';
+import { TrumpSpinner } from '@/components/ui';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,7 +55,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-gray-400" />
+        <TrumpSpinner size="lg" />
       </div>
     );
   }

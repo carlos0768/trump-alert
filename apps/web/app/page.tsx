@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Zap, RefreshCw, Loader2 } from 'lucide-react';
+import { Zap, RefreshCw } from 'lucide-react';
+import { TrumpSpinner } from '@/components/ui';
 import { ArticleCard } from '@/components/article';
 import { TrumpIndexChart, type TrumpIndexDataPoint } from '@/components/charts';
 import {
@@ -159,7 +160,7 @@ export default function DashboardPage() {
         <div className="divide-y divide-gray-100">
           {articlesLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="size-8 animate-spin text-gray-400" />
+              <TrumpSpinner size="lg" />
             </div>
           ) : articles.length > 0 ? (
             articles.map((article) => (
@@ -186,7 +187,7 @@ export default function DashboardPage() {
           >
             {isFetchingNextPage ? (
               <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
+                <TrumpSpinner size="sm" className="mr-2" />
                 Loading...
               </>
             ) : hasNextPage ? (
@@ -204,7 +205,7 @@ export default function DashboardPage() {
           {/* Trump Index Chart */}
           {indexLoading ? (
             <div className="flex h-48 items-center justify-center rounded-lg bg-white">
-              <Loader2 className="size-6 animate-spin text-gray-400" />
+              <TrumpSpinner size="md" />
             </div>
           ) : (
             <TrumpIndexChart
@@ -217,7 +218,7 @@ export default function DashboardPage() {
           {/* DJT Stock Widget */}
           {stockLoading ? (
             <div className="flex h-24 items-center justify-center rounded-lg bg-white">
-              <Loader2 className="size-6 animate-spin text-gray-400" />
+              <TrumpSpinner size="md" />
             </div>
           ) : (
             <StockWidget stock={stock} />
@@ -229,7 +230,7 @@ export default function DashboardPage() {
           {/* Trending Topics */}
           {topicsLoading ? (
             <div className="flex h-48 items-center justify-center rounded-lg bg-white">
-              <Loader2 className="size-6 animate-spin text-gray-400" />
+              <TrumpSpinner size="md" />
             </div>
           ) : (
             <TrendingTopics topics={topics} />

@@ -10,3 +10,4 @@ export {
   CardFooter,
 } from './card';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export { TrumpSpinner, TrumpLoadingOverlay } from './trump-spinner';
