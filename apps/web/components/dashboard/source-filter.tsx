@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SOURCES, type SourceConfig } from '@/lib/sources';
+import { SOURCES } from '@/lib/sources';
 
 interface Source {
   id: string;
