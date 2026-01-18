@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import {
   chromium,
@@ -11,6 +11,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+import { AIAnalyzerService } from '../analyzer/ai-analyzer.service';
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -66,7 +67,11 @@ export class TruthSocialScraperService {
   );
   private accessToken: string | null = null;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => AIAnalyzerService))
+    private readonly aiAnalyzer: AIAnalyzerService
+  ) {}
 
   // Run every 5 minutes
   @Cron('*/5 * * * *')
@@ -593,6 +598,14 @@ export class TruthSocialScraperService {
       });
 
       this.logger.log(`Saved new Truth Social post: ${article.id}`);
+
+      // Trigger AI analysis (translation, summary, sentiment, etc.)
+      this.aiAnalyzer
+        .analyzeArticle(article.id)
+        .catch((err) =>
+          this.logger.error(`AI analysis failed for ${article.id}: ${err}`)
+        );
+
       return article;
     } catch (error) {
       this.logger.error(`Failed to save Truth Social post: ${error}`);
