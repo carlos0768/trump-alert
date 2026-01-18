@@ -1,0 +1,50 @@
+# Nixpacks configuration for Railway deployment
+# Includes Playwright browser dependencies
+
+[phases.setup]
+nixPkgs = [
+  "nodejs_20",
+  "pnpm",
+  # Playwright dependencies
+  "chromium",
+  "nss",
+  "freetype",
+  "harfbuzz",
+  "fontconfig",
+  "mesa",
+  "libdrm",
+  "expat",
+  "nspr"
+]
+
+aptPkgs = [
+  # Additional Playwright dependencies
+  "libnss3",
+  "libatk1.0-0",
+  "libatk-bridge2.0-0",
+  "libcups2",
+  "libdrm2",
+  "libxkbcommon0",
+  "libxcomposite1",
+  "libxdamage1",
+  "libxfixes3",
+  "libxrandr2",
+  "libgbm1",
+  "libasound2",
+  "libpango-1.0-0",
+  "libcairo2"
+]
+
+[phases.install]
+cmds = [
+  "pnpm install",
+  "pnpm exec playwright install chromium --with-deps"
+]
+
+[phases.build]
+cmds = [
+  "pnpm run build"
+]
+
+[start]
+cmd = "pnpm run start:prod"
