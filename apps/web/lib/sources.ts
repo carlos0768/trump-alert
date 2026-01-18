@@ -13,6 +13,7 @@ export interface SourceConfig {
 // Source icon mapping - maps source names to their icon paths
 // Only includes sources with actual icon files in /public/sources/
 export const SOURCE_ICONS: Record<string, string> = {
+  BBC: '/sources/bbc.png',
   'Fox News': '/sources/foxnews.png',
   'Truth Social': '/sources/truthsocial.png',
   NYT: '/sources/nytimes.png',
@@ -35,7 +36,7 @@ export const SOURCES: SourceConfig[] = [
     icon: '/sources/foxnews.png',
     bias: 'Right',
   },
-  { id: 'bbc', name: 'BBC', icon: '', bias: 'Center' },
+  { id: 'bbc', name: 'BBC', icon: '/sources/bbc.png', bias: 'Center' },
   {
     id: 'truthsocial',
     name: 'Truth Social',
