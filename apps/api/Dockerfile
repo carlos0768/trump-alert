@@ -41,9 +41,6 @@ COPY packages/database/package.json ./packages/database/
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Install Playwright browsers (Chromium only to save space)
-RUN npx playwright install chromium
-
 # Copy source files
 COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
@@ -51,6 +48,9 @@ COPY packages/database ./packages/database
 
 # Generate Prisma client (use specific version matching package.json)
 RUN npx prisma@5.22.0 generate --schema=packages/database/prisma/schema.prisma
+
+# Install Playwright browsers (Chromium only)
+RUN cd apps/api && npx playwright install chromium
 
 # Build
 RUN pnpm --filter @trump-alert/api build
