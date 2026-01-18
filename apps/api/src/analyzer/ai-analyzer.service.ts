@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 // AI Prompts
@@ -251,7 +252,10 @@ export class AIAnalyzerService {
           sentiment: result.sentiment,
           bias: result.bias,
           impactLevel: result.impactLevel,
-          glossary: result.glossary.length > 0 ? result.glossary : undefined,
+          glossary:
+            result.glossary.length > 0
+              ? (result.glossary as unknown as Prisma.InputJsonValue)
+              : undefined,
         },
       });
 
