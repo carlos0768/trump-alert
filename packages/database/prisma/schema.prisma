@@ -25,6 +25,7 @@ model Article {
   sentiment   Float?
   bias        String?
   impactLevel String   @default("C")
+  glossary    Json?    // AI-generated glossary for unfamiliar terms/people
 
   // Metadata
   createdAt DateTime @default(now())

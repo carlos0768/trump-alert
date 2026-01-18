@@ -13,6 +13,11 @@ import {
   Clock,
   Globe,
   Loader2,
+  User,
+  Scale,
+  FileText,
+  Building2,
+  HelpCircle,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,6 +25,23 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ImpactBadge, BiasBadge, SentimentBadge } from '@/components/ui/badge';
 import { useArticle, useRelatedArticles } from '@/lib/hooks';
 import { formatRelativeTime } from '@/lib/utils';
+import type { GlossaryItem } from '@/lib/api';
+
+const glossaryTypeIcons: Record<GlossaryItem['type'], typeof User> = {
+  person: User,
+  law: Scale,
+  treaty: FileText,
+  organization: Building2,
+  term: HelpCircle,
+};
+
+const glossaryTypeLabels: Record<GlossaryItem['type'], string> = {
+  person: '人物',
+  law: '法律',
+  treaty: '条約',
+  organization: '機関',
+  term: '用語',
+};
 
 interface ArticlePageProps {
   params: Promise<{ id: string }>;
@@ -156,6 +178,47 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Glossary - Contextual Explanations */}
+      {article.glossary && article.glossary.length > 0 && (
+        <Card className="mt-4">
+          <CardContent className="pt-4">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <span className="flex size-5 items-center justify-center rounded bg-amber-100 text-xs text-amber-700">
+                ?
+              </span>
+              用語解説
+            </h2>
+            <div className="space-y-3">
+              {article.glossary.map((item, idx) => {
+                const Icon = glossaryTypeIcons[item.type];
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="size-4 text-gray-500" />
+                      <span className="font-medium text-gray-900">
+                        {item.termJa}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        ({item.term})
+                      </span>
+                      <span className="ml-auto rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                        {glossaryTypeLabels[item.type]}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-sm text-gray-600">
+                      {item.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}

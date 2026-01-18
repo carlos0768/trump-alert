@@ -1,5 +1,12 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+export interface GlossaryItem {
+  term: string;
+  termJa: string;
+  type: 'person' | 'law' | 'treaty' | 'organization' | 'term';
+  description: string;
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -15,6 +22,7 @@ export interface Article {
   bias: 'Left' | 'Center' | 'Right' | null;
   impactLevel: 'S' | 'A' | 'B' | 'C';
   tags: { id: string; name: string }[];
+  glossary?: GlossaryItem[];
 }
 
 export interface ArticleFilters {

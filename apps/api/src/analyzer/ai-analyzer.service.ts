@@ -66,12 +66,60 @@ const TAGS_PROMPT = `
 JSON形式: { "tags": ["Tariff", "China", "Economy"] }
 `;
 
+const GLOSSARY_PROMPT = `
+あなたは米国政治の専門家です。以下のニュース記事を読み、**一般的な日本人読者が知らない可能性が高い項目**を特定し、簡潔に解説してください。
+
+## 解説が【必要】な項目
+- 知名度の低い政治家（州議会議員、多くの下院議員、メディア露出の少ない上院議員など）
+- 具体的な法案・法律（CHIPS法、第14修正条項、Insurrection Actなど）
+- 条約・協定（USMCA、ABM条約など）
+- 政府機関・委員会（GAO、OMB、J6委員会など）
+- 政治専門用語（フィリバスター、reconciliation、executive orderなど）
+
+## 解説が【不要】な項目（必ず除外）
+- 歴代大統領・副大統領（トランプ、バイデン、オバマ、ブッシュ、クリントン、カマラ・ハリス、ペンスなど）
+- 超有名政治家（ペロシ、マコーネル、AOC、イーロン・マスクなど）
+- 基本用語（民主党、共和党、上院、下院、ホワイトハウス、FBI、CIAなど）
+- 国際的に有名な機関（NATO、国連、WHO、IMFなど）
+- 誰でも知っている国名・都市名
+
+## 記事
+タイトル: {title}
+本文: {content}
+
+## 出力ルール
+1. 該当項目がある場合のみ解説を出力（最大5件、重要度順）
+2. 各解説は40〜80文字で簡潔に
+3. **該当項目がなければ必ず空配列を返す**（これが最も重要）
+
+## JSON出力形式
+{
+  "glossary": [
+    {
+      "term": "Bill Cassidy",
+      "termJa": "ビル・キャシディ",
+      "type": "person",
+      "description": "ルイジアナ州選出の共和党上院議員。医師出身で、医療政策に詳しい。2021年トランプ弾劾裁判で有罪票を投じた。"
+    }
+  ]
+}
+
+該当なしの場合: { "glossary": [] }
+`;
+
 function fillPrompt(template: string, values: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(values)) {
     result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
   }
   return result;
+}
+
+export interface GlossaryItem {
+  term: string;
+  termJa: string;
+  type: 'person' | 'law' | 'treaty' | 'organization' | 'term';
+  description: string;
 }
 
 export interface AnalysisResult {
@@ -85,6 +133,7 @@ export interface AnalysisResult {
   sentiment: number;
   bias: 'Left' | 'Center' | 'Right';
   impactLevel: 'S' | 'A' | 'B' | 'C';
+  glossary: GlossaryItem[];
 }
 
 // GPT-4o-mini pricing (per 1M tokens)
@@ -165,13 +214,15 @@ export class AIAnalyzerService {
       );
 
       // Then run all analyses in parallel
-      const [summary, sentiment, bias, impactLevel, tags] = await Promise.all([
-        this.getSummary(article.title, article.content, articleId),
-        this.getSentiment(article.content, articleId),
-        this.getBias(article.content, articleId),
-        this.getImpact(article.title, articleId),
-        this.getTags(article.title, article.content, articleId),
-      ]);
+      const [summary, sentiment, bias, impactLevel, tags, glossary] =
+        await Promise.all([
+          this.getSummary(article.title, article.content, articleId),
+          this.getSentiment(article.content, articleId),
+          this.getBias(article.content, articleId),
+          this.getImpact(article.title, articleId),
+          this.getTags(article.title, article.content, articleId),
+          this.getGlossary(article.title, article.content, articleId),
+        ]);
 
       // Save tags to database
       await this.saveTags(articleId, tags);
@@ -187,6 +238,7 @@ export class AIAnalyzerService {
         sentiment,
         bias,
         impactLevel,
+        glossary,
       };
 
       // Update the article with analysis results
@@ -199,6 +251,7 @@ export class AIAnalyzerService {
           sentiment: result.sentiment,
           bias: result.bias,
           impactLevel: result.impactLevel,
+          glossary: result.glossary.length > 0 ? result.glossary : undefined,
         },
       });
 
@@ -434,6 +487,61 @@ export class AIAnalyzerService {
     }
 
     return 'C'; // Default to lowest impact
+  }
+
+  private async getGlossary(
+    title: string,
+    content: string,
+    articleId?: string
+  ): Promise<GlossaryItem[]> {
+    const prompt = fillPrompt(GLOSSARY_PROMPT, {
+      title,
+      content: content.substring(0, 2500),
+    });
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          max_tokens: 500,
+        });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'glossary',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        if (Array.isArray(result.glossary)) {
+          // Validate and filter glossary items
+          return result.glossary
+            .filter(
+              (item: GlossaryItem) =>
+                item.term &&
+                item.termJa &&
+                item.type &&
+                item.description &&
+                ['person', 'law', 'treaty', 'organization', 'term'].includes(
+                  item.type
+                )
+            )
+            .slice(0, 5); // Max 5 items
+        }
+      } catch (error) {
+        this.logger.warn(`Glossary attempt ${attempt + 1} failed: ${error}`);
+        await this.sleep(1000 * Math.pow(2, attempt));
+      }
+    }
+
+    return []; // Empty array if no glossary needed or on failure
   }
 
   private sleep(ms: number): Promise<void> {
