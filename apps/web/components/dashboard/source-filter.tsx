@@ -2,6 +2,7 @@
 
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SOURCES, type SourceConfig } from '@/lib/sources';
 
 interface Source {
   id: string;
@@ -59,11 +60,9 @@ export function SourceFilter({
   );
 }
 
-export const mockSources: Source[] = [
-  { id: 'cnn', name: 'CNN', bias: 'Left' },
-  { id: 'foxnews', name: 'Fox News', bias: 'Right' },
-  { id: 'bbc', name: 'BBC', bias: 'Center' },
-  { id: 'truthsocial', name: 'Truth Social', bias: 'Right' },
-  { id: 'nyt', name: 'NYT', bias: 'Left' },
-  { id: 'reuters', name: 'Reuters', bias: 'Center' },
-];
+export const mockSources: Source[] = SOURCES.map((s) => ({
+  id: s.id,
+  name: s.name,
+  icon: s.icon,
+  bias: s.bias,
+}));

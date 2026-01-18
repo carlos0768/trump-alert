@@ -12,10 +12,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Trump Alert - Real-time Trump News Tracker',
+  title: 'トランプトラッカー - トランプ関連ニュース速報',
   description:
-    'Real-time monitoring and analysis of Trump-related news, social media, and market impact.',
-  keywords: ['Trump', 'News', 'Alert', 'Politics', 'DJT', 'Truth Social'],
+    'トランプ関連のニュース、SNS、市場動向をリアルタイムで監視・分析。大統領令や法案も追跡。',
+  keywords: ['トランプ', 'ニュース', '速報', '大統領令', 'DJT', 'Truth Social'],
 };
 
 export default function RootLayout({

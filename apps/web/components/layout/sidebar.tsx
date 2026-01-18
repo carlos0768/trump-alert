@@ -82,8 +82,8 @@ export function Sidebar() {
                   <div className="flex size-8 items-center justify-center rounded-lg bg-primary-600">
                     <TrendingUp className="size-5 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-gray-900">
-                    TRUMP<span className="text-primary-600">.</span>
+                  <span className="text-lg font-bold text-gray-900">
+                    トランプトラッカー
                   </span>
                 </div>
                 <button
@@ -153,8 +153,8 @@ function DesktopSidebarContent({ pathname }: { pathname: string }) {
         <div className="flex size-8 items-center justify-center rounded-lg bg-primary-600">
           <TrendingUp className="size-5 text-white" />
         </div>
-        <span className="text-xl font-bold text-gray-900">
-          TRUMP<span className="text-primary-600">.</span>
+        <span className="text-lg font-bold text-gray-900">
+          トランプトラッカー
         </span>
       </div>
 

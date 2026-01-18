@@ -1,4 +1,5 @@
 import type { Article } from '@/components/article';
+import { getSourceIcon } from './sources';
 
 export const mockArticles: Article[] = [
   {
@@ -7,7 +8,7 @@ export const mockArticles: Article[] = [
       'Trump Announces New Tariff Policy on Chinese Imports, Markets React',
     url: 'https://example.com/trump-tariff-policy',
     source: 'Fox News',
-    sourceIcon: '/sources/foxnews.png',
+    sourceIcon: getSourceIcon('Fox News'),
     content:
       'Former President Donald Trump announced a sweeping new tariff policy targeting Chinese imports during a rally in Iowa...',
     publishedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 min ago
@@ -32,7 +33,7 @@ export const mockArticles: Article[] = [
     title: 'Breaking: Trump Indictment Updates - New Evidence Presented',
     url: 'https://example.com/trump-indictment-updates',
     source: 'CNN',
-    sourceIcon: '/sources/cnn.png',
+    sourceIcon: getSourceIcon('CNN'),
     content:
       'Special Counsel presents new documentary evidence in the ongoing federal case against former President Trump...',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
@@ -57,7 +58,7 @@ export const mockArticles: Article[] = [
     title: 'Truth Social Post: Trump Calls for Unity Among Republicans',
     url: 'https://truthsocial.com/@realDonaldTrump/123456',
     source: 'Truth Social',
-    sourceIcon: '/sources/truthsocial.png',
+    sourceIcon: getSourceIcon('Truth Social'),
     content:
       'We need to come together as one party, one movement, one people. The MAGA movement is stronger than ever!',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
@@ -80,7 +81,7 @@ export const mockArticles: Article[] = [
     title: 'Analysis: Impact of Trump Policies on Global Trade Relations',
     url: 'https://example.com/trump-global-trade-analysis',
     source: 'Reuters',
-    sourceIcon: '/sources/reuters.png',
+    sourceIcon: getSourceIcon('Reuters'),
     content:
       'An in-depth analysis of how potential Trump administration policies could reshape international trade...',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
@@ -105,7 +106,7 @@ export const mockArticles: Article[] = [
     title: 'DJT Stock Surges 15% Following Campaign Rally',
     url: 'https://example.com/djt-stock-surge',
     source: 'BBC',
-    sourceIcon: '/sources/bbc.png',
+    sourceIcon: getSourceIcon('BBC'),
     content:
       'Trump Media & Technology Group shares experienced significant gains following a major campaign event...',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
@@ -128,7 +129,7 @@ export const mockArticles: Article[] = [
     title: 'Vance Defends Trump Immigration Stance in Senate Hearing',
     url: 'https://example.com/vance-immigration-hearing',
     source: 'Fox News',
-    sourceIcon: '/sources/foxnews.png',
+    sourceIcon: getSourceIcon('Fox News'),
     content:
       'Senator JD Vance delivered a passionate defense of Trump-era immigration policies during a heated Senate committee hearing...',
     publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 18), // 18 hours ago

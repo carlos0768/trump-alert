@@ -13,6 +13,7 @@ import {
 import { Avatar } from '@/components/ui/avatar';
 import { ImpactBadge, BiasBadge, SentimentBadge } from '@/components/ui/badge';
 import { cn, formatNumber, formatRelativeTime } from '@/lib/utils';
+import { getSourceIcon } from '@/lib/sources';
 
 export interface Article {
   id: string;
@@ -45,13 +46,15 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
   // Prefer Japanese if available
   const displayTitle = article.titleJa || article.title;
   const displayContent = article.contentJa || article.content;
+  // Use provided sourceIcon or fallback to configured icon
+  const iconSrc = article.sourceIcon || getSourceIcon(article.source);
 
   return (
     <article className="border-b border-gray-100 bg-white px-4 py-4 transition-colors hover:bg-gray-50">
       <div className="flex gap-3">
         {/* Source Avatar */}
         <Avatar
-          src={article.sourceIcon}
+          src={iconSrc}
           alt={article.source}
           fallback={article.source.charAt(0)}
           size="md"
