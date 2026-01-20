@@ -58,6 +58,7 @@ export default function DashboardPage() {
   const {
     data: articlesData,
     isLoading: articlesLoading,
+    isRefetching: articlesRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -139,9 +140,12 @@ export default function DashboardPage() {
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => refetchArticles()}
+                  disabled={articlesRefetching}
                   className="text-muted-foreground"
                 >
-                  <RefreshCw className="size-4" />
+                  <RefreshCw
+                    className={cn('size-4', articlesRefetching && 'animate-spin')}
+                  />
                 </Button>
                 <LiveBadge />
                 
