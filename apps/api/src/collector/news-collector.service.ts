@@ -134,6 +134,7 @@ export class NewsCollectorService {
                   source: analyzed.source,
                   sentiment: analyzed.sentiment,
                   summary: analyzed.summary,
+                  publishedAt: article.publishedAt,
                 });
               }
             })

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
@@ -23,6 +23,8 @@ export interface UpdateAlertDto {
 
 @Injectable()
 export class AlertService {
+  private readonly logger = new Logger(AlertService.name);
+
   constructor(
     private prisma: PrismaService,
     @InjectQueue('notification-send') private notificationQueue: Queue
@@ -93,7 +95,19 @@ export class AlertService {
     source: string;
     sentiment: number | null;
     summary: string[] | null;
+    publishedAt?: Date;
   }) {
+    // 1時間以上前の記事には通知を送らない（古い記事の一括通知を防ぐ）
+    if (article.publishedAt) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      if (new Date(article.publishedAt) < oneHourAgo) {
+        this.logger.log(
+          `Skipping notification for old article: ${article.id} (published: ${article.publishedAt})`
+        );
+        return;
+      }
+    }
+
     const activeAlerts = await this.getActiveAlerts();
 
     for (const alert of activeAlerts) {
