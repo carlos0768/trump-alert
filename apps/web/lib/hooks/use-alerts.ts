@@ -89,7 +89,9 @@ export function useAlerts() {
 
   const createMutation = useMutation({
     mutationFn: (data: CreateAlertInput) =>
-      user ? createAlert(user.id, data) : Promise.reject('Not authenticated'),
+      user
+        ? createAlert(user.id, data)
+        : Promise.reject(new Error('ログインが必要です')),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alerts', user?.id] });
     },

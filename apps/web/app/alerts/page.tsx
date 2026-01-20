@@ -45,6 +45,7 @@ export default function AlertsPage() {
   const [newNotifyPush, setNewNotifyPush] = useState(true);
   const [newNotifyEmail, setNewNotifyEmail] = useState(false);
   const [newNotifyDiscord, setNewNotifyDiscord] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleAlertActive = (id: string, currentActive: boolean) => {
     updateAlert(id, { isActive: !currentActive });
@@ -57,7 +58,17 @@ export default function AlertsPage() {
   };
 
   const handleCreateAlert = () => {
-    if (!newKeyword.trim()) return;
+    setError(null);
+    
+    if (!newKeyword.trim()) {
+      setError('キーワードを入力してください');
+      return;
+    }
+
+    if (!user) {
+      setError('ログインが必要です');
+      return;
+    }
 
     const alertData: CreateAlertInput = {
       keyword: newKeyword.trim(),
@@ -71,6 +82,10 @@ export default function AlertsPage() {
       onSuccess: () => {
         setNewKeyword('');
         setShowCreateForm(false);
+        setError(null);
+      },
+      onError: (err) => {
+        setError(err instanceof Error ? err.message : 'アラートの作成に失敗しました');
       },
     });
   };
@@ -318,10 +333,19 @@ export default function AlertsPage() {
                 </div>
               </div>
 
+              {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setShowCreateForm(false)}
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setError(null);
+                  }}
                 >
                   キャンセル
                 </Button>
