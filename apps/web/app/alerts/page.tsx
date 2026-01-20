@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Bell,
@@ -14,6 +14,9 @@ import {
   LogIn,
   Zap,
   AlertTriangle,
+  Loader2,
+  Check,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,9 +30,16 @@ import { Badge, ImpactBadge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useAlerts, type CreateAlertInput } from '@/lib/hooks/use-alerts';
+import {
+  isPushSupported,
+  getNotificationPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getCurrentSubscription,
+} from '@/lib/push-notifications';
 
 export default function AlertsPage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, savePushSubscription } = useAuth();
   const {
     alerts,
     isLoading: alertsLoading,
@@ -46,6 +56,61 @@ export default function AlertsPage() {
   const [newNotifyEmail, setNewNotifyEmail] = useState(false);
   const [newNotifyDiscord, setNewNotifyDiscord] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Push notification state
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+
+  // Check push notification status on mount
+  useEffect(() => {
+    const checkPushStatus = async () => {
+      const supported = isPushSupported();
+      setPushSupported(supported);
+      
+      if (supported) {
+        const permission = getNotificationPermission();
+        setPushPermission(permission as NotificationPermission);
+        
+        const subscription = await getCurrentSubscription();
+        setPushSubscribed(!!subscription);
+      }
+    };
+    
+    checkPushStatus();
+  }, []);
+
+  // Handle push notification toggle
+  const handlePushToggle = async () => {
+    if (!user) {
+      setPushError('ログインが必要です');
+      return;
+    }
+
+    setPushLoading(true);
+    setPushError(null);
+
+    try {
+      if (pushSubscribed) {
+        // Unsubscribe
+        await unsubscribeFromPush();
+        setPushSubscribed(false);
+      } else {
+        // Subscribe
+        const subscription = await subscribeToPush();
+        await savePushSubscription(subscription);
+        setPushSubscribed(true);
+        setPushPermission('granted');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'プッシュ通知の設定に失敗しました';
+      setPushError(message);
+    } finally {
+      setPushLoading(false);
+    }
+  };
 
   const toggleAlertActive = (id: string, currentActive: boolean) => {
     updateAlert(id, { isActive: !currentActive });
@@ -459,31 +524,83 @@ export default function AlertsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
+            {/* Push Notification Error */}
+            {pushError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                {pushError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between rounded-lg border border-border p-4">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary-100">
-                  <Smartphone className="size-5 text-primary-600" />
+                <div className={cn(
+                  "flex size-10 items-center justify-center rounded-lg",
+                  pushSubscribed ? "bg-green-100" : "bg-primary-100"
+                )}>
+                  <Smartphone className={cn(
+                    "size-5",
+                    pushSubscribed ? "text-green-600" : "text-primary-600"
+                  )} />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">プッシュ通知</p>
-                  <p className="text-sm text-gray-500">
-                    ブラウザのプッシュ通知を受け取る
+                  <p className="font-medium text-foreground">プッシュ通知</p>
+                  <p className="text-sm text-muted-foreground">
+                    {!pushSupported
+                      ? 'このブラウザはプッシュ通知に対応していません'
+                      : pushPermission === 'denied'
+                        ? 'ブラウザの設定で通知がブロックされています'
+                        : pushSubscribed
+                          ? 'プッシュ通知を受信中'
+                          : 'ブラウザのプッシュ通知を受け取る'}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                有効化
-              </Button>
+              {pushSupported && pushPermission !== 'denied' && (
+                <Button
+                  variant={pushSubscribed ? "outline" : "default"}
+                  size="sm"
+                  onClick={handlePushToggle}
+                  disabled={pushLoading}
+                  className="gap-2"
+                >
+                  {pushLoading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      処理中...
+                    </>
+                  ) : pushSubscribed ? (
+                    <>
+                      <X className="size-4" />
+                      無効化
+                    </>
+                  ) : (
+                    <>
+                      <Check className="size-4" />
+                      有効化
+                    </>
+                  )}
+                </Button>
+              )}
+              {pushPermission === 'denied' && (
+                <Badge variant="secondary" className="text-red-600">
+                  ブロック中
+                </Badge>
+              )}
+              {!pushSupported && (
+                <Badge variant="secondary">
+                  非対応
+                </Badge>
+              )}
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between rounded-lg border border-border p-4">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
                   <Mail className="size-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">メール通知</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-foreground">メール通知</p>
+                  <p className="text-sm text-muted-foreground">
                     {user?.email || 'メールアドレス未設定'}
                   </p>
                 </div>
@@ -493,23 +610,23 @@ export default function AlertsPage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
+            <div className="flex items-center justify-between rounded-lg border border-border p-4">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-100">
                   <MessageSquare className="size-5 text-indigo-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Discord Webhook</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-foreground">Discord Webhook</p>
+                  <p className="text-sm text-muted-foreground">
                     {user?.discordWebhook
                       ? '設定済み'
                       : 'Discordチャンネルに通知を送信'}
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                {user?.discordWebhook ? '変更' : '接続'}
-              </Button>
+              <Badge variant="secondary">
+                近日公開
+              </Badge>
             </div>
           </div>
         </CardContent>
