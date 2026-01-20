@@ -45,25 +45,25 @@ export default function LegislationPage() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className="border-b border-border bg-surface-elevated px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100">
-              <FileSignature className="size-5 text-blue-600" />
+            <div className="flex size-10 items-center justify-center rounded-lg bg-primary-600/20">
+              <FileSignature className="size-5 text-primary-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="font-headline text-xl font-bold uppercase tracking-wide text-foreground">
                 大統領令・法令
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Federal Registerより取得した公式文書
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{total}件の文書</span>
+            <span className="text-sm text-muted-foreground">{total}件の文書</span>
             <Button
               variant="ghost"
               size="icon-sm"
@@ -86,8 +86,8 @@ export default function LegislationPage() {
               className={cn(
                 'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
                 typeFilter === filter.value
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-surface-muted text-muted-foreground hover:bg-surface-elevated hover:text-foreground'
               )}
             >
               {filter.label}
@@ -100,7 +100,7 @@ export default function LegislationPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="size-8 animate-spin text-gray-400" />
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : orders.length > 0 ? (
           <>
@@ -119,7 +119,7 @@ export default function LegislationPage() {
               >
                 前のページ
               </Button>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {offset + 1} - {Math.min(offset + limit, total)} / {total}件
               </span>
               <Button
@@ -133,11 +133,11 @@ export default function LegislationPage() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <FileSignature className="mb-4 size-12 text-gray-300" />
-            <h3 className="mb-2 text-lg font-medium text-gray-900">
+            <FileSignature className="mb-4 size-12 text-muted-foreground/30" />
+            <h3 className="mb-2 font-headline text-lg font-medium text-foreground">
               文書がありません
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Federal Registerからデータを収集すると、ここに表示されます。
             </p>
           </div>

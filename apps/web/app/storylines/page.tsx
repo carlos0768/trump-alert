@@ -26,17 +26,19 @@ export default function StorylinesPage() {
   } = useStorylines(statusFilter);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className="border-b border-border bg-surface-elevated px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary-100">
-              <BookOpen className="size-5 text-primary-600" />
+            <div className="flex size-10 items-center justify-center rounded-lg bg-primary-600/20">
+              <BookOpen className="size-5 text-primary-400" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Storylines</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="font-headline text-xl font-bold uppercase tracking-wide text-foreground">
+                STORYLINES
+              </h1>
+              <p className="text-sm text-muted-foreground">
                 関連するニュースを時系列で追跡
               </p>
             </div>
@@ -63,7 +65,7 @@ export default function StorylinesPage() {
                 'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
                 statusFilter === filter.value
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-surface-muted text-muted-foreground hover:bg-surface-elevated hover:text-foreground'
               )}
             >
               {filter.label}
@@ -76,7 +78,7 @@ export default function StorylinesPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="size-8 animate-spin text-gray-400" />
+            <Loader2 className="size-8 animate-spin text-muted-foreground" />
           </div>
         ) : storylines && storylines.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -86,11 +88,11 @@ export default function StorylinesPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <BookOpen className="mb-4 size-12 text-gray-300" />
-            <h3 className="mb-2 text-lg font-medium text-gray-900">
+            <BookOpen className="mb-4 size-12 text-muted-foreground/30" />
+            <h3 className="mb-2 font-headline text-lg font-medium text-foreground">
               ストーリーラインがありません
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               ニュースが収集されると、AIが関連記事を自動でグループ化します。
             </p>
           </div>
