@@ -69,6 +69,19 @@ export interface WeeklyData {
   sentiment: number;
 }
 
+export interface UrgentStats {
+  urgentCount: number;
+  breakingCount: number;
+  hasBreaking: boolean;
+  latestUrgent: {
+    id: string;
+    title: string;
+    titleJa?: string;
+    publishedAt: string;
+    impactLevel: string;
+  } | null;
+}
+
 export interface SourceDistribution {
   name: string;
   value: number;
@@ -213,6 +226,23 @@ export async function fetchDailyStats() {
   }
 
   return res.json();
+}
+
+// Fetch urgent stats (for header notifications)
+export async function fetchUrgentStats(): Promise<UrgentStats | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/stats/urgent`, {
+      next: { revalidate: 60 },
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 // Fetch available sources

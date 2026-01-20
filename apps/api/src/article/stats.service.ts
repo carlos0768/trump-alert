@@ -418,6 +418,50 @@ export class StatsService {
     };
   }
 
+  async getUrgentStats() {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const [urgentCount, breakingCount, latestUrgent] = await Promise.all([
+      // Total urgent (S/A) articles in last 24 hours
+      this.prisma.article.count({
+        where: {
+          publishedAt: { gte: twentyFourHoursAgo },
+          impactLevel: { in: ['S', 'A'] },
+        },
+      }),
+      // Breaking: urgent articles in last 1 hour
+      this.prisma.article.count({
+        where: {
+          publishedAt: { gte: oneHourAgo },
+          impactLevel: { in: ['S', 'A'] },
+        },
+      }),
+      // Latest urgent article for "breaking" indicator
+      this.prisma.article.findFirst({
+        where: {
+          impactLevel: { in: ['S', 'A'] },
+        },
+        orderBy: { publishedAt: 'desc' },
+        select: {
+          id: true,
+          titleJa: true,
+          title: true,
+          publishedAt: true,
+          impactLevel: true,
+        },
+      }),
+    ]);
+
+    return {
+      urgentCount,
+      breakingCount,
+      hasBreaking: breakingCount > 0,
+      latestUrgent,
+    };
+  }
+
   async getApiUsageStats() {
     const today = new Date();
     const startOfToday = new Date(today.setHours(0, 0, 0, 0));

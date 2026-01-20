@@ -17,6 +17,7 @@ import {
   fetchRecentStorylineUpdates,
   fetchExecutiveOrders,
   fetchRecentExecutiveOrders,
+  fetchUrgentStats,
   ArticleFilters,
 } from '../api';
 
@@ -155,5 +156,14 @@ export function useRecentExecutiveOrders(limit = 5) {
     queryKey: ['recentExecutiveOrders', limit],
     queryFn: () => fetchRecentExecutiveOrders(limit),
     refetchInterval: 300000,
+  });
+}
+
+// Fetch urgent stats (for header notifications)
+export function useUrgentStats() {
+  return useQuery({
+    queryKey: ['urgentStats'],
+    queryFn: fetchUrgentStats,
+    refetchInterval: 60000, // Refetch every minute
   });
 }

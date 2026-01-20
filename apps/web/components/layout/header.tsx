@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { Search, Bell, AlertTriangle, ChevronDown, Menu } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { useSidebarStore } from '@/lib/hooks';
+import { useSidebarStore, useUrgentStats } from '@/lib/hooks';
+import type { UrgentStats } from '@/lib/api';
 
 export function Header() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>('');
   const openSidebar = useSidebarStore((state) => state.open);
+  const { data: urgentStats } = useUrgentStats();
 
   // Update time every second
   useEffect(() => {
@@ -72,7 +74,7 @@ export function Header() {
 
         {/* Desktop only: Breaking indicator & time */}
         <div className="hidden items-center gap-4 lg:flex">
-          <BreakingIndicator />
+          <BreakingIndicator urgentStats={urgentStats} />
           <div className="h-6 w-px bg-border" />
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm text-muted-foreground">
@@ -101,10 +103,10 @@ export function Header() {
       {/* Right side */}
       <div className="flex items-center gap-3">
         {/* Alert count badge */}
-        <AlertButton count={3} />
+        <AlertButton count={urgentStats?.urgentCount ?? 0} />
 
         {/* Notifications */}
-        <NotificationButton count={12} />
+        <NotificationButton count={urgentStats?.breakingCount ?? 0} />
 
         {/* User menu */}
         <UserMenu />
@@ -113,7 +115,20 @@ export function Header() {
   );
 }
 
-function BreakingIndicator() {
+function BreakingIndicator({ urgentStats }: { urgentStats?: UrgentStats | null }) {
+  // Don't show if no breaking news in the last hour
+  if (!urgentStats?.hasBreaking) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="rounded bg-muted px-2 py-1">
+          <span className="font-headline text-xs tracking-wider text-muted-foreground">
+            NO ALERTS
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2">
       <div className="relative">
@@ -124,12 +139,25 @@ function BreakingIndicator() {
         {/* Glow effect */}
         <div className="absolute inset-0 rounded bg-urgent/30 blur-md -z-10" />
       </div>
-      <span className="text-sm text-muted-foreground">5 new alerts</span>
+      <span className="text-sm text-muted-foreground">
+        {urgentStats.breakingCount} new alert{urgentStats.breakingCount !== 1 ? 's' : ''}
+      </span>
     </div>
   );
 }
 
 function AlertButton({ count }: { count: number }) {
+  if (count === 0) {
+    return (
+      <button className="relative flex items-center gap-1.5 rounded-lg bg-muted px-3 py-2 text-muted-foreground transition-all hover:bg-surface-elevated">
+        <AlertTriangle className="size-4" />
+        <span className="hidden font-headline text-xs tracking-wider sm:block">
+          0 URGENT
+        </span>
+      </button>
+    );
+  }
+
   return (
     <button className="relative flex items-center gap-1.5 rounded-lg bg-urgent/10 px-3 py-2 text-urgent transition-all hover:bg-urgent/20">
       <AlertTriangle className="size-4" />

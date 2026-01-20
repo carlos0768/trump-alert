@@ -104,6 +104,11 @@ export class ArticleController {
     return this.statsService.getAnalyticsOverview();
   }
 
+  @Get('stats/urgent')
+  async getUrgentStats() {
+    return this.statsService.getUrgentStats();
+  }
+
   @Post('collect')
   async triggerCollection() {
     return this.newsCollector.triggerCollection();
