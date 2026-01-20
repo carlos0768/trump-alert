@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Search, Bell, AlertTriangle, ChevronDown, Menu } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -149,17 +150,23 @@ function BreakingIndicator({ urgentStats }: { urgentStats?: UrgentStats | null }
 function AlertButton({ count }: { count: number }) {
   if (count === 0) {
     return (
-      <button className="relative flex items-center gap-1.5 rounded-lg bg-muted px-3 py-2 text-muted-foreground transition-all hover:bg-surface-elevated">
+      <Link
+        href="/alerts"
+        className="relative flex items-center gap-1.5 rounded-lg bg-muted px-3 py-2 text-muted-foreground transition-all hover:bg-surface-elevated"
+      >
         <AlertTriangle className="size-4" />
         <span className="hidden font-headline text-xs tracking-wider sm:block">
           0 URGENT
         </span>
-      </button>
+      </Link>
     );
   }
 
   return (
-    <button className="relative flex items-center gap-1.5 rounded-lg bg-urgent/10 px-3 py-2 text-urgent transition-all hover:bg-urgent/20">
+    <Link
+      href="/?impactLevels=S,A"
+      className="relative flex items-center gap-1.5 rounded-lg bg-urgent/10 px-3 py-2 text-urgent transition-all hover:bg-urgent/20"
+    >
       <AlertTriangle className="size-4" />
       <span className="hidden font-headline text-xs tracking-wider sm:block">
         {count} URGENT
@@ -169,20 +176,23 @@ function AlertButton({ count }: { count: number }) {
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-urgent opacity-75" />
         <span className="relative inline-flex size-3 rounded-full bg-urgent" />
       </span>
-    </button>
+    </Link>
   );
 }
 
 function NotificationButton({ count }: { count: number }) {
   return (
-    <button className="relative rounded-lg p-2 text-muted-foreground transition-all hover:bg-surface-elevated hover:text-foreground">
+    <Link
+      href="/alerts"
+      className="relative rounded-lg p-2 text-muted-foreground transition-all hover:bg-surface-elevated hover:text-foreground"
+    >
       <Bell className="size-5" />
       {count > 0 && (
         <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
           {count > 9 ? '9+' : count}
         </span>
       )}
-    </button>
+    </Link>
   );
 }
 
