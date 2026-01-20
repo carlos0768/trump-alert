@@ -17,12 +17,14 @@ export function TrumpSpinner({ size = 'md', className }: TrumpSpinnerProps) {
   return (
     <div className={cn('flex items-center justify-center', className)}>
       <div className="relative">
-        <img
-          src="/trump-face.png"
-          alt="Loading..."
-          className={cn(sizeClasses[size], 'animate-spin rounded-full')}
-          style={{ animationDuration: '1s' }}
-        />
+        <div className={cn(sizeClasses[size], 'overflow-hidden rounded-full')}>
+          <img
+            src="/trump-face.png"
+            alt="Loading..."
+            className="size-full scale-125 animate-spin object-cover"
+            style={{ animationDuration: '1s' }}
+          />
+        </div>
         {/* Glow effect */}
         <div
           className={cn(

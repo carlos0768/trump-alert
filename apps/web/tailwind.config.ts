@@ -146,14 +146,17 @@ const config: Config = {
         'headline-xl': ['4rem', { lineHeight: '1', letterSpacing: '0.02em' }],
         'headline-lg': ['3rem', { lineHeight: '1.1', letterSpacing: '0.02em' }],
         'headline-md': ['2rem', { lineHeight: '1.2', letterSpacing: '0.01em' }],
-        'headline-sm': ['1.5rem', { lineHeight: '1.3', letterSpacing: '0.01em' }],
+        'headline-sm': [
+          '1.5rem',
+          { lineHeight: '1.3', letterSpacing: '0.01em' },
+        ],
       },
       animation: {
         'pulse-urgent': 'pulse-urgent 2s ease-in-out infinite',
         'slide-in-right': 'slide-in-right 0.3s ease-out',
         'slide-in-up': 'slide-in-up 0.4s ease-out',
         'breaking-glow': 'breaking-glow 1.5s ease-in-out infinite',
-        'ticker': 'ticker 30s linear infinite',
+        ticker: 'ticker 30s linear infinite',
         'fade-in': 'fade-in 0.5s ease-out',
       },
       keyframes: {
@@ -173,7 +176,7 @@ const config: Config = {
           '0%, 100%': { boxShadow: '0 0 20px rgba(255, 0, 0, 0.5)' },
           '50%': { boxShadow: '0 0 40px rgba(255, 0, 0, 0.8)' },
         },
-        'ticker': {
+        ticker: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-50%)' },
         },
@@ -184,7 +187,8 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-breaking': 'linear-gradient(135deg, #C41E3A 0%, #8B0000 100%)',
+        'gradient-breaking':
+          'linear-gradient(135deg, #C41E3A 0%, #8B0000 100%)',
         'gradient-live': 'linear-gradient(90deg, #00A8E8 0%, #0077B6 100%)',
         'gradient-dark': 'linear-gradient(180deg, #0A1628 0%, #0F172A 100%)',
       },

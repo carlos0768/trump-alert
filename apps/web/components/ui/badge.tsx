@@ -194,9 +194,5 @@ export function LiveBadge({ className }: { className?: string }) {
 
 // Breaking badge with urgent styling
 export function BreakingBadge({ className }: { className?: string }) {
-  return (
-    <span className={cn('breaking-badge', className)}>
-      BREAKING
-    </span>
-  );
+  return <span className={cn('breaking-badge', className)}>BREAKING</span>;
 }

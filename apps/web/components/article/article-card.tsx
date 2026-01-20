@@ -13,7 +13,12 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
-import { ImpactBadge, BiasBadge, SentimentBadge, BreakingBadge } from '@/components/ui/badge';
+import {
+  ImpactBadge,
+  BiasBadge,
+  SentimentBadge,
+  BreakingBadge,
+} from '@/components/ui/badge';
 import { cn, formatNumber, formatRelativeTime } from '@/lib/utils';
 import { getSourceIcon } from '@/lib/sources';
 
@@ -87,16 +92,16 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {/* Breaking badge */}
               {isBreaking && <BreakingBadge className="mr-1" />}
-              
+
               <span className="font-headline text-sm tracking-wider text-foreground">
                 {article.source.toUpperCase()}
               </span>
-              
+
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Clock className="size-3" />
                 {formatRelativeTime(article.publishedAt)}
               </span>
-              
+
               {/* Badges */}
               <div className="flex items-center gap-1.5">
                 <ImpactBadge level={article.impactLevel} />
@@ -106,7 +111,7 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
                 )}
               </div>
             </div>
-            
+
             <button
               className="rounded-full p-1.5 text-muted-foreground hover:bg-surface-overlay hover:text-foreground transition-colors"
               aria-label="More options"
@@ -212,7 +217,9 @@ function ActionButton({ icon: Icon, count, active }: ActionButtonProps) {
     >
       <Icon className="size-4" />
       {count !== undefined && (
-        <span className="font-mono text-xs tabular-nums">{formatNumber(count)}</span>
+        <span className="font-mono text-xs tabular-nums">
+          {formatNumber(count)}
+        </span>
       )}
     </button>
   );

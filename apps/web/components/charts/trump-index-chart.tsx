@@ -144,7 +144,9 @@ export function TrumpIndexChart({
                     const data = payload[0].payload as NormalizedDataPoint;
                     return (
                       <div className="rounded-lg border border-border bg-surface-elevated p-3 shadow-xl">
-                        <p className="font-mono text-xs text-muted-foreground">{data.time}</p>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {data.time}
+                        </p>
                         <p
                           className={cn(
                             'font-mono text-xl font-bold tabular-nums',
@@ -172,7 +174,11 @@ export function TrumpIndexChart({
                 type="monotone"
                 dataKey="sentiment"
                 stroke="none"
-                fill={currentIndex >= 0 ? 'url(#positiveGradient)' : 'url(#negativeGradient)'}
+                fill={
+                  currentIndex >= 0
+                    ? 'url(#positiveGradient)'
+                    : 'url(#negativeGradient)'
+                }
                 fillOpacity={1}
                 baseLine={0}
               />
@@ -192,7 +198,7 @@ export function TrumpIndexChart({
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        
+
         {/* Sentiment bar indicator */}
         <div className="mt-4 space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -215,4 +221,3 @@ export function TrumpIndexChart({
     </Card>
   );
 }
-

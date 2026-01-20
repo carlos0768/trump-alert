@@ -116,7 +116,11 @@ export function Header() {
   );
 }
 
-function BreakingIndicator({ urgentStats }: { urgentStats?: UrgentStats | null }) {
+function BreakingIndicator({
+  urgentStats,
+}: {
+  urgentStats?: UrgentStats | null;
+}) {
   // Don't show if no breaking news in the last hour
   if (!urgentStats?.hasBreaking) {
     return (
@@ -141,7 +145,8 @@ function BreakingIndicator({ urgentStats }: { urgentStats?: UrgentStats | null }
         <div className="absolute inset-0 rounded bg-urgent/30 blur-md -z-10" />
       </div>
       <span className="text-sm text-muted-foreground">
-        {urgentStats.breakingCount} new alert{urgentStats.breakingCount !== 1 ? 's' : ''}
+        {urgentStats.breakingCount} new alert
+        {urgentStats.breakingCount !== 1 ? 's' : ''}
       </span>
     </div>
   );
@@ -199,12 +204,7 @@ function NotificationButton({ count }: { count: number }) {
 function UserMenu() {
   return (
     <button className="flex items-center gap-2 rounded-lg p-1.5 transition-all hover:bg-surface-elevated">
-      <Avatar
-        src="/avatar-placeholder.png"
-        alt="User"
-        fallback="U"
-        size="sm"
-      />
+      <Avatar src="/avatar-placeholder.png" alt="User" fallback="U" size="sm" />
       <ChevronDown className="hidden size-4 text-muted-foreground lg:block" />
     </button>
   );

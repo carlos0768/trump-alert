@@ -172,7 +172,10 @@ export default function ArticlePage({ params }: ArticlePageProps) {
             </h2>
             <ul className="space-y-2">
               {article.summary.map((point, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-foreground/80">
+                <li
+                  key={idx}
+                  className="flex items-start gap-3 text-foreground/80"
+                >
                   <span className="mt-2 size-1.5 flex-shrink-0 rounded-full bg-primary-500" />
                   <span className="text-pretty">{point}</span>
                 </li>

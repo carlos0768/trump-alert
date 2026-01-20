@@ -5,28 +5,28 @@
 @layer base {
   :root {
     /* CNN Breaking News Dark Theme */
-    --background: 222 47% 6%;        /* #0A1628 - Deep navy */
-    --foreground: 210 40% 98%;       /* #F8FAFC - Clean white */
+    --background: 222 47% 6%; /* #0A1628 - Deep navy */
+    --foreground: 210 40% 98%; /* #F8FAFC - Clean white */
 
-    --card: 222 47% 9%;              /* #0F172A - Slightly lighter navy */
+    --card: 222 47% 9%; /* #0F172A - Slightly lighter navy */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;          /* #1E293B - Elevated surface */
+    --popover: 222 47% 11%; /* #1E293B - Elevated surface */
     --popover-foreground: 210 40% 98%;
 
-    --primary: 350 79% 44%;          /* #C41E3A - Crimson red */
+    --primary: 350 79% 44%; /* #C41E3A - Crimson red */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%;        /* #243B53 - Muted navy */
+    --secondary: 217 33% 17%; /* #243B53 - Muted navy */
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 195 100% 45%;          /* #00A8E8 - Electric blue */
+    --accent: 195 100% 45%; /* #00A8E8 - Electric blue */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 100% 50%;       /* #FF0000 - Pure red for alerts */
+    --destructive: 0 100% 50%; /* #FF0000 - Pure red for alerts */
     --destructive-foreground: 0 0% 100%;
 
     --border: 217 33% 20%;
@@ -48,11 +48,15 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 
   /* Headlines styling */
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     @apply font-headline tracking-wide;
   }
 }
@@ -158,12 +162,13 @@
   /* Sentiment indicator */
   .sentiment-bar {
     @apply h-1 rounded-full;
-    background: linear-gradient(90deg, 
-      #EF4444 0%, 
-      #F59E0B 25%, 
-      #6B7280 50%, 
-      #22C55E 75%, 
-      #10B981 100%
+    background: linear-gradient(
+      90deg,
+      #ef4444 0%,
+      #f59e0b 25%,
+      #6b7280 50%,
+      #22c55e 75%,
+      #10b981 100%
     );
   }
 
@@ -205,11 +210,21 @@
 
 /* Stagger animations for lists */
 @layer utilities {
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
-  .stagger-5 { animation-delay: 0.5s; }
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+  .stagger-5 {
+    animation-delay: 0.5s;
+  }
 
   .animate-on-scroll {
     @apply opacity-0;

@@ -141,9 +141,7 @@ function NavItem({ item, isActive }: NavItemProps) {
           : 'text-muted-foreground hover:bg-surface-elevated hover:text-foreground'
       )}
     >
-      <item.icon
-        className={cn('size-5', isActive ? 'text-primary-500' : '')}
-      />
+      <item.icon className={cn('size-5', isActive ? 'text-primary-500' : '')} />
       <span className="flex-1">{item.name}</span>
       {item.badge && (
         <span className="live-badge flex items-center gap-1 !px-2 !py-0.5 !text-[10px]">
@@ -162,7 +160,7 @@ function ProUpgradeCard() {
         {/* Decorative elements */}
         <div className="absolute -right-4 -top-4 size-24 rounded-full bg-primary-500/10 blur-2xl" />
         <div className="absolute -bottom-4 -left-4 size-16 rounded-full bg-accent/10 blur-xl" />
-        
+
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="size-4 text-primary-400" />

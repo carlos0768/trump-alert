@@ -22,7 +22,14 @@ export const metadata: Metadata = {
   title: 'TRUMP TRACKER - Breaking News & Live Updates',
   description:
     'Real-time Trump news monitoring, sentiment analysis, and market impact tracking. Breaking alerts delivered instantly.',
-  keywords: ['Trump', 'Breaking News', 'Live Updates', 'DJT', 'Truth Social', 'Politics'],
+  keywords: [
+    'Trump',
+    'Breaking News',
+    'Live Updates',
+    'DJT',
+    'Truth Social',
+    'Politics',
+  ],
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,

@@ -39,7 +39,12 @@ import {
 } from '@/lib/push-notifications';
 
 export default function AlertsPage() {
-  const { user, isAuthenticated, isLoading: authLoading, savePushSubscription } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    savePushSubscription,
+  } = useAuth();
   const {
     alerts,
     isLoading: alertsLoading,
@@ -59,7 +64,9 @@ export default function AlertsPage() {
 
   // Push notification state
   const [pushSupported, setPushSupported] = useState(false);
-  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushPermission, setPushPermission] = useState<
+    NotificationPermission | 'unsupported'
+  >('default');
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
@@ -69,16 +76,16 @@ export default function AlertsPage() {
     const checkPushStatus = async () => {
       const supported = isPushSupported();
       setPushSupported(supported);
-      
+
       if (supported) {
         const permission = getNotificationPermission();
         setPushPermission(permission as NotificationPermission);
-        
+
         const subscription = await getCurrentSubscription();
         setPushSubscribed(!!subscription);
       }
     };
-    
+
     checkPushStatus();
   }, []);
 
@@ -105,7 +112,8 @@ export default function AlertsPage() {
         setPushPermission('granted');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'プッシュ通知の設定に失敗しました';
+      const message =
+        err instanceof Error ? err.message : 'プッシュ通知の設定に失敗しました';
       setPushError(message);
     } finally {
       setPushLoading(false);
@@ -124,7 +132,7 @@ export default function AlertsPage() {
 
   const handleCreateAlert = () => {
     setError(null);
-    
+
     if (!newKeyword.trim()) {
       setError('キーワードを入力してください');
       return;
@@ -150,7 +158,9 @@ export default function AlertsPage() {
         setError(null);
       },
       onError: (err) => {
-        setError(err instanceof Error ? err.message : 'アラートの作成に失敗しました');
+        setError(
+          err instanceof Error ? err.message : 'アラートの作成に失敗しました'
+        );
       },
     });
   };
@@ -166,7 +176,7 @@ export default function AlertsPage() {
             <div className="absolute -left-4 -top-4 size-32 rounded-full bg-white blur-3xl" />
             <div className="absolute -bottom-4 -right-4 size-32 rounded-full bg-yellow-300 blur-3xl" />
           </div>
-          
+
           {/* Content */}
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-3">
@@ -180,23 +190,21 @@ export default function AlertsPage() {
                 </span>
               </div>
             </div>
-            
+
             <h1 className="font-headline text-3xl font-black uppercase tracking-tight mb-2">
               🚨 トランプアラートを設定する
             </h1>
             <p className="text-white/80 text-sm max-w-lg">
               トランプに関する重要ニュースが発生したら、即座にあなたに通知。
-              <span className="font-bold text-yellow-300">見逃しは許されない。</span>
+              <span className="font-bold text-yellow-300">
+                見逃しは許されない。
+              </span>
             </p>
           </div>
-          
+
           {/* Trump silhouette decoration */}
           <div className="absolute -right-8 -bottom-8 opacity-20">
-            <img 
-              src="/trump-face.png" 
-              alt="" 
-              className="size-40 rotate-12"
-            />
+            <img src="/trump-face.png" alt="" className="size-40 rotate-12" />
           </div>
         </div>
 
@@ -233,7 +241,7 @@ export default function AlertsPage() {
           <div className="absolute -left-4 -top-4 size-32 rounded-full bg-white blur-3xl" />
           <div className="absolute -bottom-4 -right-4 size-32 rounded-full bg-yellow-300 blur-3xl" />
         </div>
-        
+
         {/* Content */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
@@ -247,15 +255,17 @@ export default function AlertsPage() {
               </span>
             </div>
           </div>
-          
+
           <h1 className="font-headline text-3xl font-black uppercase tracking-tight mb-2">
             🚨 トランプアラートを設定する
           </h1>
           <p className="text-white/80 text-sm max-w-lg">
             トランプに関する重要ニュースが発生したら、即座にあなたに通知。
-            <span className="font-bold text-yellow-300">見逃しは許されない。</span>
+            <span className="font-bold text-yellow-300">
+              見逃しは許されない。
+            </span>
           </p>
-          
+
           <div className="flex items-center gap-4 mt-4">
             <Button
               onClick={() => setShowCreateForm(true)}
@@ -266,25 +276,24 @@ export default function AlertsPage() {
               今すぐ設定
             </Button>
             <div className="text-xs text-white/60">
-              <span className="font-bold text-yellow-300">{alerts.length}</span> 件のアラート設定中
+              <span className="font-bold text-yellow-300">{alerts.length}</span>{' '}
+              件のアラート設定中
             </div>
           </div>
         </div>
-        
+
         {/* Trump silhouette decoration */}
         <div className="absolute -right-8 -bottom-8 opacity-20">
-          <img 
-            src="/trump-face.png" 
-            alt="" 
-            className="size-40 rotate-12"
-          />
+          <img src="/trump-face.png" alt="" className="size-40 rotate-12" />
         </div>
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-headline text-xl font-bold text-foreground uppercase tracking-wide">MY ALERTS</h2>
+          <h2 className="font-headline text-xl font-bold text-foreground uppercase tracking-wide">
+            MY ALERTS
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             キーワードにマッチするニュースが届いたら通知を受け取る
           </p>
@@ -533,14 +542,18 @@ export default function AlertsPage() {
 
             <div className="flex items-center justify-between rounded-lg border border-border p-4">
               <div className="flex items-center gap-3">
-                <div className={cn(
-                  "flex size-10 items-center justify-center rounded-lg",
-                  pushSubscribed ? "bg-green-100" : "bg-primary-100"
-                )}>
-                  <Smartphone className={cn(
-                    "size-5",
-                    pushSubscribed ? "text-green-600" : "text-primary-600"
-                  )} />
+                <div
+                  className={cn(
+                    'flex size-10 items-center justify-center rounded-lg',
+                    pushSubscribed ? 'bg-green-100' : 'bg-primary-100'
+                  )}
+                >
+                  <Smartphone
+                    className={cn(
+                      'size-5',
+                      pushSubscribed ? 'text-green-600' : 'text-primary-600'
+                    )}
+                  />
                 </div>
                 <div>
                   <p className="font-medium text-foreground">プッシュ通知</p>
@@ -557,7 +570,7 @@ export default function AlertsPage() {
               </div>
               {pushSupported && pushPermission !== 'denied' && (
                 <Button
-                  variant={pushSubscribed ? "outline" : "default"}
+                  variant={pushSubscribed ? 'outline' : 'default'}
                   size="sm"
                   onClick={handlePushToggle}
                   disabled={pushLoading}
@@ -586,11 +599,7 @@ export default function AlertsPage() {
                   ブロック中
                 </Badge>
               )}
-              {!pushSupported && (
-                <Badge variant="secondary">
-                  非対応
-                </Badge>
-              )}
+              {!pushSupported && <Badge variant="secondary">非対応</Badge>}
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-border p-4">
@@ -624,9 +633,7 @@ export default function AlertsPage() {
                   </p>
                 </div>
               </div>
-              <Badge variant="secondary">
-                近日公開
-              </Badge>
+              <Badge variant="secondary">近日公開</Badge>
             </div>
           </div>
         </CardContent>

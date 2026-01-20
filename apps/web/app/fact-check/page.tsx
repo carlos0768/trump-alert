@@ -190,7 +190,9 @@ export default function FactCheckPage() {
       <div className="mt-8 flex items-center justify-center gap-6">
         <div className="flex items-center gap-2">
           <div className="size-3 rounded-full bg-bias-left" />
-          <span className="text-sm text-muted-foreground">Left-leaning sources</span>
+          <span className="text-sm text-muted-foreground">
+            Left-leaning sources
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <div className="size-3 rounded-full bg-bias-center" />
@@ -198,7 +200,9 @@ export default function FactCheckPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="size-3 rounded-full bg-bias-right" />
-          <span className="text-sm text-muted-foreground">Right-leaning sources</span>
+          <span className="text-sm text-muted-foreground">
+            Right-leaning sources
+          </span>
         </div>
       </div>
 
@@ -211,7 +215,10 @@ export default function FactCheckPage() {
         /* Comparisons */
         <div className="mt-8 space-y-6">
           {comparisons.map((comparison) => (
-            <Card key={comparison.id} className="overflow-hidden border-border bg-surface-elevated">
+            <Card
+              key={comparison.id}
+              className="overflow-hidden border-border bg-surface-elevated"
+            >
               {/* Topic Header */}
               <div className="border-b border-border bg-surface-muted px-6 py-3">
                 <div className="flex items-center justify-between">

@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 const typeColors = {
   executive_order: 'bg-accent/20 text-accent border-accent/30',
   proclamation: 'bg-primary-500/20 text-primary-400 border-primary-500/30',
-  memorandum: 'bg-sentiment-positive/20 text-sentiment-positive border-sentiment-positive/30',
+  memorandum:
+    'bg-sentiment-positive/20 text-sentiment-positive border-sentiment-positive/30',
   other: 'bg-surface-overlay text-muted-foreground border-border',
 };
 

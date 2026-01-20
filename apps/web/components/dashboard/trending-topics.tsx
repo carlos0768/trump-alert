@@ -31,12 +31,13 @@ export function TrendingTopics({ topics }: TrendingTopicsProps) {
           {topics.map((topic, index) => {
             const rank = topic.rank ?? index + 1;
             const count = topic.articleCount ?? topic.count ?? 0;
-            const TrendIcon = topic.trend === 'up' 
-              ? TrendingUp 
-              : topic.trend === 'down' 
-                ? TrendingDown 
-                : Minus;
-            
+            const TrendIcon =
+              topic.trend === 'up'
+                ? TrendingUp
+                : topic.trend === 'down'
+                  ? TrendingDown
+                  : Minus;
+
             return (
               <button
                 key={topic.id ?? topic.rank ?? index}

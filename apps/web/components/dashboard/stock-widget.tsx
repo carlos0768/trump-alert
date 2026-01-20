@@ -1,6 +1,11 @@
 'use client';
 
-import { ArrowUpRight, ArrowDownRight, DollarSign, BarChart3 } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  DollarSign,
+  BarChart3,
+} from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +65,7 @@ export function StockWidget({ stock }: StockWidgetProps) {
             </span>
           </div>
         </div>
-        
+
         {/* Volume bar */}
         <div className="mt-4 flex items-center gap-2">
           <BarChart3 className="size-4 text-muted-foreground" />
@@ -71,7 +76,7 @@ export function StockWidget({ stock }: StockWidgetProps) {
               : stock.volume}
           </span>
         </div>
-        
+
         {/* Mini trend indicator */}
         <div className="mt-3 flex h-8 items-end gap-0.5">
           {Array.from({ length: 12 }).map((_, i) => {
@@ -97,4 +102,3 @@ export function StockWidget({ stock }: StockWidgetProps) {
     </Card>
   );
 }
-

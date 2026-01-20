@@ -14,11 +14,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     };
 
     return (
-      <div
-        ref={ref}
-        className={cn(variants[variant], className)}
-        {...props}
-      />
+      <div ref={ref} className={cn(variants[variant], className)} {...props} />
     );
   }
 );

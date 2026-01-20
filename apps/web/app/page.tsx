@@ -144,11 +144,14 @@ export default function DashboardPage() {
                   className="text-muted-foreground"
                 >
                   <RefreshCw
-                    className={cn('size-4', articlesRefetching && 'animate-spin')}
+                    className={cn(
+                      'size-4',
+                      articlesRefetching && 'animate-spin'
+                    )}
                   />
                 </Button>
                 <LiveBadge />
-                
+
                 {urgentCount > 0 && (
                   <div className="flex items-center gap-1.5 rounded-lg bg-urgent/10 px-2.5 py-1 text-urgent">
                     <AlertTriangle className="size-3.5" />
@@ -248,13 +251,22 @@ export default function DashboardPage() {
                 TRUMP TRACKER © 2024
               </p>
               <div className="mt-2 flex justify-center gap-4">
-                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href="#"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Terms
                 </a>
-                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href="#"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Privacy
                 </a>
-                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href="#"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
                   About
                 </a>
               </div>
@@ -268,7 +280,12 @@ export default function DashboardPage() {
 
 // News Ticker Component
 interface NewsTickerProps {
-  articles: Array<{ id: string; title: string; titleJa?: string; impactLevel: string }>;
+  articles: Array<{
+    id: string;
+    title: string;
+    titleJa?: string;
+    impactLevel: string;
+  }>;
 }
 
 function NewsTicker({ articles }: NewsTickerProps) {
@@ -313,7 +330,8 @@ function EmptyState() {
         NO NEWS YET
       </h3>
       <p className="text-sm text-muted-foreground text-center max-w-sm">
-        We're monitoring all sources. Breaking news will appear here as soon as it's detected.
+        We're monitoring all sources. Breaking news will appear here as soon as
+        it's detected.
       </p>
     </div>
   );
@@ -322,7 +340,12 @@ function EmptyState() {
 // Widget Skeleton Component
 function WidgetSkeleton({ height }: { height: string }) {
   return (
-    <div className={cn('flex items-center justify-center rounded-lg bg-card border border-border', height)}>
+    <div
+      className={cn(
+        'flex items-center justify-center rounded-lg bg-card border border-border',
+        height
+      )}
+    >
       <TrumpSpinner size="md" />
     </div>
   );

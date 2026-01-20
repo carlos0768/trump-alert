@@ -115,7 +115,9 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
         <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-border bg-surface-elevated p-4 shadow-xl animate-slide-in-up">
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
-            <span className="font-headline text-sm tracking-wider text-foreground">FILTERS</span>
+            <span className="font-headline text-sm tracking-wider text-foreground">
+              FILTERS
+            </span>
             <div className="flex items-center gap-2">
               {activeFilterCount > 0 && (
                 <button
@@ -150,16 +152,22 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
                       filters.impactLevels.includes(option.value)
                         ? cn(
                             'text-white',
-                            option.value === 'S' && 'bg-impact-s shadow-lg shadow-impact-s/30',
-                            option.value === 'A' && 'bg-impact-a shadow-lg shadow-impact-a/30',
+                            option.value === 'S' &&
+                              'bg-impact-s shadow-lg shadow-impact-s/30',
+                            option.value === 'A' &&
+                              'bg-impact-a shadow-lg shadow-impact-a/30',
                             option.value === 'B' && 'bg-impact-b text-black',
                             option.value === 'C' && 'bg-impact-c'
                           )
                         : 'bg-surface-overlay text-muted-foreground hover:bg-surface hover:text-foreground'
                     )}
                   >
-                    <span className="font-headline text-lg">{option.label}</span>
-                    <span className="text-[9px] opacity-75">{option.description}</span>
+                    <span className="font-headline text-lg">
+                      {option.label}
+                    </span>
+                    <span className="text-[9px] opacity-75">
+                      {option.description}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -180,15 +188,19 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
                       filters.biases.includes(option.value)
                         ? cn(
                             'text-white',
-                            option.value === 'Left' && 'bg-bias-left shadow-lg shadow-bias-left/30',
+                            option.value === 'Left' &&
+                              'bg-bias-left shadow-lg shadow-bias-left/30',
                             option.value === 'Center' && 'bg-bias-center',
-                            option.value === 'Right' && 'bg-bias-right shadow-lg shadow-bias-right/30'
+                            option.value === 'Right' &&
+                              'bg-bias-right shadow-lg shadow-bias-right/30'
                           )
                         : 'bg-surface-overlay text-muted-foreground hover:bg-surface hover:text-foreground'
                     )}
                   >
                     <span className="text-lg">{option.label}</span>
-                    <span className="font-headline text-[9px] tracking-wider">{option.description}</span>
+                    <span className="font-headline text-[9px] tracking-wider">
+                      {option.description}
+                    </span>
                   </button>
                 ))}
               </div>

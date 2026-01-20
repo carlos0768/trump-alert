@@ -63,7 +63,9 @@ export default function LegislationPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{total}件の文書</span>
+            <span className="text-sm text-muted-foreground">
+              {total}件の文書
+            </span>
             <Button
               variant="ghost"
               size="icon-sm"
