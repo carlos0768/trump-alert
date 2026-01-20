@@ -71,23 +71,23 @@ export default function DashboardPage() {
 
   const articles = articlesData?.pages.flatMap((page) => page.articles) ?? [];
 
-  const indexData: TrumpIndexDataPoint[] =
-    trumpIndexData && trumpIndexData.length > 0
-      ? trumpIndexData
-      : mockTrumpIndexData;
+  // Use API data if available, otherwise fallback to mock
+  // API always returns 12 data points, check if any have actual article data
+  const hasRealIndexData =
+    trumpIndexData &&
+    trumpIndexData.length > 0 &&
+    trumpIndexData.some((d) => d.articleCount > 0);
+  const indexData: TrumpIndexDataPoint[] = hasRealIndexData
+    ? trumpIndexData
+    : mockTrumpIndexData;
   const getSentiment = (item: TrumpIndexDataPoint | undefined) =>
     item?.sentiment ?? item?.avgSentiment ?? 0;
   const currentIndex = getSentiment(indexData[indexData.length - 1]);
   const previousIndex = getSentiment(indexData[indexData.length - 2]);
   const indexChange = currentIndex - previousIndex;
 
-  const stock = stockData ?? {
-    symbol: 'DJT',
-    price: 34.56,
-    change: 2.34,
-    changePercent: 7.26,
-    volume: 12500000,
-  };
+  // Stock data - no fallback, show nothing if unavailable
+  const stock = stockData;
 
   const topics =
     trendingTopics && trendingTopics.length > 0
@@ -224,9 +224,9 @@ export default function DashboardPage() {
             {/* DJT Stock Widget */}
             {stockLoading ? (
               <WidgetSkeleton height="h-32" />
-            ) : (
+            ) : stock ? (
               <StockWidget stock={stock} />
-            )}
+            ) : null}
 
             {/* Executive Orders Widget */}
             <ExecutiveOrderWidget />

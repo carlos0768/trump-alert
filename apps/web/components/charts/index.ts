@@ -1,5 +1,1 @@
-export {
-  TrumpIndexChart,
-  generateMockTrumpIndexData,
-  type TrumpIndexDataPoint,
-} from './trump-index-chart';
+export { TrumpIndexChart, type TrumpIndexDataPoint } from './trump-index-chart';

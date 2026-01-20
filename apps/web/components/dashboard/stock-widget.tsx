@@ -98,10 +98,3 @@ export function StockWidget({ stock }: StockWidgetProps) {
   );
 }
 
-export const mockStockData: StockData = {
-  symbol: 'DJT',
-  price: 34.56,
-  change: 2.34,
-  changePercent: 7.26,
-  volume: '12.5M',
-};

@@ -59,6 +59,7 @@ export interface TrendingTopic {
   rank: number;
   name: string;
   count: number;
+  trend?: 'up' | 'down' | 'stable';
 }
 
 export interface WeeklyData {
@@ -169,22 +170,21 @@ export async function fetchTrumpIndex(
 }
 
 // Fetch stock data
-export async function fetchStockData(): Promise<StockData> {
-  const res = await fetch(`${API_URL}/api/stats/stock`, {
-    next: { revalidate: 60 },
-  });
+export async function fetchStockData(): Promise<StockData | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/stats/stock`, {
+      next: { revalidate: 60 },
+    });
 
-  if (!res.ok) {
-    return {
-      symbol: 'DJT',
-      price: 34.56,
-      change: 2.34,
-      changePercent: 7.26,
-      volume: 12500000,
-    };
+    if (!res.ok) {
+      return null;
+    }
+
+    const data = await res.json();
+    return data; // Can be null if no data in database
+  } catch {
+    return null;
   }
-
-  return res.json();
 }
 
 // Fetch trending topics

@@ -130,10 +130,58 @@ export class StatsService {
   }
 
   async getTrendingTopics(limit: number = 10) {
-    // Get most frequently occurring tags in recent articles
-    const recentArticles = await this.prisma.article.findMany({
+    const now = Date.now();
+    const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now - 48 * 60 * 60 * 1000);
+
+    // Get tag counts for the last 24 hours
+    const recentTagCounts = await this.getTagCounts(oneDayAgo, new Date());
+
+    // Get tag counts for 24-48 hours ago (for trend comparison)
+    const previousTagCounts = await this.getTagCounts(twoDaysAgo, oneDayAgo);
+
+    // Calculate trends and sort by count
+    const topics = Array.from(recentTagCounts.entries())
+      .map(([name, count]) => {
+        const previousCount = previousTagCounts.get(name) || 0;
+        let trend: 'up' | 'down' | 'stable' = 'stable';
+
+        // Calculate trend based on change percentage
+        if (previousCount === 0 && count > 0) {
+          trend = 'up'; // New topic
+        } else if (previousCount > 0) {
+          const changeRatio = count / previousCount;
+          if (changeRatio > 1.2) {
+            trend = 'up'; // More than 20% increase
+          } else if (changeRatio < 0.8) {
+            trend = 'down'; // More than 20% decrease
+          }
+        }
+
+        return { name, count, trend };
+      })
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+
+    return topics.map((topic, index) => ({
+      rank: index + 1,
+      name: topic.name,
+      count: topic.count,
+      trend: topic.trend,
+    }));
+  }
+
+  /**
+   * Get tag counts for a specific time period
+   * Falls back to keyword extraction if no tags exist
+   */
+  private async getTagCounts(
+    from: Date,
+    to: Date
+  ): Promise<Map<string, number>> {
+    const articles = await this.prisma.article.findMany({
       where: {
-        publishedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+        publishedAt: { gte: from, lte: to },
       },
       include: {
         tags: {
@@ -143,23 +191,88 @@ export class StatsService {
     });
 
     const tagCounts = new Map<string, number>();
-    for (const article of recentArticles) {
+
+    // First, count tags from ArticleTag relations
+    for (const article of articles) {
       for (const articleTag of article.tags) {
         const tagName = articleTag.tag.name;
         tagCounts.set(tagName, (tagCounts.get(tagName) || 0) + 1);
       }
     }
 
-    // Sort by count and return top N
-    const sorted = Array.from(tagCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit);
+    // If no tags found via relations, extract keywords from article content
+    if (tagCounts.size === 0 && articles.length > 0) {
+      this.logger.log(
+        `No tags found, extracting keywords from ${articles.length} articles`
+      );
+      for (const article of articles) {
+        const keywords = this.extractKeywords(article.title, article.content);
+        for (const keyword of keywords) {
+          tagCounts.set(keyword, (tagCounts.get(keyword) || 0) + 1);
+        }
+      }
+    }
 
-    return sorted.map(([name, count], index) => ({
-      rank: index + 1,
-      name,
-      count,
-    }));
+    return tagCounts;
+  }
+
+  /**
+   * Extract keywords from article title and content
+   * Used as fallback when articles don't have tags
+   */
+  private extractKeywords(title: string, content?: string): string[] {
+    const text = `${title} ${content || ''}`.toLowerCase();
+    const keywords: string[] = [];
+
+    const keywordMap: Record<string, string> = {
+      tariff: 'Tariff',
+      tariffs: 'Tariff',
+      immigration: 'Immigration',
+      immigrant: 'Immigration',
+      border: 'Border',
+      election: 'Election',
+      '2024': 'Election2024',
+      '2028': 'Election2028',
+      trial: 'Trial',
+      court: 'Trial',
+      lawsuit: 'Trial',
+      indictment: 'Indictment',
+      indicted: 'Indictment',
+      china: 'China',
+      chinese: 'China',
+      economy: 'Economy',
+      economic: 'Economy',
+      inflation: 'Economy',
+      stock: 'DJTStock',
+      djt: 'DJTStock',
+      rally: 'Rally',
+      vance: 'Vance',
+      'truth social': 'TruthSocial',
+      maga: 'MAGA',
+      'jan 6': 'Jan6',
+      'january 6': 'Jan6',
+      classified: 'ClassifiedDocs',
+      'executive order': 'ExecutiveOrder',
+      'mar-a-lago': 'MarALago',
+      russia: 'Russia',
+      ukraine: 'Ukraine',
+      nato: 'NATO',
+      hush: 'HushMoney',
+      manhattan: 'ManhattanTrial',
+      georgia: 'GeorgiaTrial',
+      deport: 'Deportation',
+      deportation: 'Deportation',
+      tax: 'Tax',
+      taxes: 'Tax',
+    };
+
+    for (const [keyword, tag] of Object.entries(keywordMap)) {
+      if (text.includes(keyword) && !keywords.includes(tag)) {
+        keywords.push(tag);
+      }
+    }
+
+    return keywords;
   }
 
   async getStockData() {
@@ -168,32 +281,37 @@ export class StatsService {
       orderBy: { timestamp: 'desc' },
     });
 
+    // Return null if no stock data exists in database
+    if (!latestPrice) {
+      this.logger.warn('No stock data found in database');
+      return null;
+    }
+
     const previousPrice = await this.prisma.stockPrice.findFirst({
       where: {
         symbol: 'DJT',
         timestamp: {
-          lt: latestPrice?.timestamp || new Date(),
+          lt: latestPrice.timestamp,
         },
       },
       orderBy: { timestamp: 'desc' },
     });
 
-    if (!latestPrice) {
-      return {
-        symbol: 'DJT',
-        price: 34.56,
-        change: 2.34,
-        changePercent: 7.26,
-        volume: 12500000,
-      };
-    }
+    // Calculate change from previous price
+    const priceChange = previousPrice
+      ? latestPrice.price - previousPrice.price
+      : 0;
+    const changePercent = previousPrice
+      ? ((latestPrice.price - previousPrice.price) / previousPrice.price) * 100
+      : latestPrice.change; // Use stored change if no previous price
 
     return {
       symbol: latestPrice.symbol,
       price: latestPrice.price,
-      change: previousPrice ? latestPrice.price - previousPrice.price : 0,
-      changePercent: latestPrice.change,
+      change: Math.round(priceChange * 100) / 100,
+      changePercent: Math.round(changePercent * 100) / 100,
       volume: Number(latestPrice.volume),
+      timestamp: latestPrice.timestamp,
     };
   }
 
