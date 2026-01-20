@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -10,13 +10,13 @@ import {
   Scale,
   Settings,
   X,
-  Menu,
   BookOpen,
   FileSignature,
   Zap,
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSidebarStore } from '@/lib/hooks';
 
 const navigation = [
   { name: 'LIVE FEED', href: '/', icon: Home, badge: 'LIVE' },
@@ -30,12 +30,12 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, close } = useSidebarStore();
 
   // Close sidebar when route changes
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+    close();
+  }, [pathname, close]);
 
   // Prevent body scroll when sidebar is open
   useEffect(() => {
@@ -51,15 +51,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-4 z-40 rounded-lg bg-surface-elevated p-2 text-foreground shadow-lg lg:hidden"
-        aria-label="Open menu"
-      >
-        <Menu className="size-5" />
-      </button>
-
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 flex-shrink-0 border-r border-border bg-gradient-to-b from-secondary-900 to-surface lg:block">
         <DesktopSidebarContent pathname={pathname} />
@@ -71,7 +62,7 @@ export function Sidebar() {
           {/* Overlay */}
           <div
             className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
-            onClick={() => setIsOpen(false)}
+            onClick={close}
           />
 
           {/* Sidebar panel */}
@@ -81,7 +72,7 @@ export function Sidebar() {
               <div className="flex h-16 items-center justify-between border-b border-border px-4">
                 <Logo />
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={close}
                   className="rounded-lg p-2 text-muted-foreground hover:bg-surface-elevated hover:text-foreground"
                   aria-label="Close menu"
                 >

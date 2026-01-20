@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Bell, AlertTriangle, ChevronDown } from 'lucide-react';
+import { Search, Bell, AlertTriangle, ChevronDown, Menu } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useSidebarStore } from '@/lib/hooks';
 
 export function Header() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>('');
+  const openSidebar = useSidebarStore((state) => state.open);
 
   // Update time every second
   useEffect(() => {
@@ -53,19 +55,31 @@ export function Header() {
   return (
     <header
       className={cn(
-        'flex h-16 flex-shrink-0 items-center justify-between border-b border-border bg-surface px-4 pl-16 transition-transform duration-300 lg:px-6 lg:pl-6 lg:translate-y-0',
+        'flex h-16 flex-shrink-0 items-center justify-between border-b border-border bg-surface px-4 transition-transform duration-300 lg:px-6 lg:translate-y-0',
         isVisible ? 'translate-y-0' : '-translate-y-full'
       )}
     >
-      {/* Left section - Breaking indicator & time */}
-      <div className="hidden items-center gap-4 lg:flex">
-        <BreakingIndicator />
-        <div className="h-6 w-px bg-border" />
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-muted-foreground">
-            {currentTime}
-          </span>
-          <span className="text-xs text-muted-foreground">EST</span>
+      {/* Left section - Mobile menu button, Breaking indicator & time */}
+      <div className="flex items-center gap-4">
+        {/* Mobile menu button */}
+        <button
+          onClick={openSidebar}
+          className="rounded-lg p-2 text-foreground hover:bg-surface-elevated lg:hidden"
+          aria-label="Open menu"
+        >
+          <Menu className="size-5" />
+        </button>
+
+        {/* Desktop only: Breaking indicator & time */}
+        <div className="hidden items-center gap-4 lg:flex">
+          <BreakingIndicator />
+          <div className="h-6 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm text-muted-foreground">
+              {currentTime}
+            </span>
+            <span className="text-xs text-muted-foreground">EST</span>
+          </div>
         </div>
       </div>
 
