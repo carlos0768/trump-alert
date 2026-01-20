@@ -63,7 +63,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   if (error || !article) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4">
-        <p className="text-gray-500">Article not found</p>
+        <p className="text-muted-foreground">Article not found</p>
         <Link href="/">
           <Button variant="outline">Back to Feed</Button>
         </Link>
@@ -85,7 +85,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       {/* Back Button */}
       <Link
         href="/"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="size-4" />
         Back to Feed
@@ -100,10 +100,10 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         />
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-foreground">
               {article.source}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {formatRelativeTime(publishedAt)}
             </span>
           </div>
@@ -118,12 +118,12 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       </div>
 
       {/* Title */}
-      <h1 className="mt-6 text-balance text-2xl font-bold leading-tight text-gray-900">
+      <h1 className="mt-6 text-balance text-2xl font-bold leading-tight text-foreground">
         {displayTitle}
       </h1>
 
       {/* Metadata */}
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <Clock className="size-4" />
           <span>
@@ -142,7 +142,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-primary-600"
+            className="hover:text-primary-500 transition-colors"
           >
             {new URL(article.url).hostname}
           </a>
@@ -151,7 +151,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
 
       {/* Image */}
       {article.imageUrl && (
-        <div className="mt-6 overflow-hidden rounded-xl border border-gray-200">
+        <div className="mt-6 overflow-hidden rounded-xl border border-border">
           <img
             src={article.imageUrl}
             alt=""
@@ -164,16 +164,16 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       {article.summary && article.summary.length > 0 && (
         <Card className="mt-6">
           <CardContent className="pt-4">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <span className="flex size-5 items-center justify-center rounded bg-primary-100 text-xs text-primary-700">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <span className="flex size-5 items-center justify-center rounded bg-primary-500/20 text-xs text-primary-400">
                 AI
               </span>
               Summary
             </h2>
             <ul className="space-y-2">
               {article.summary.map((point, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-gray-700">
-                  <span className="mt-2 size-1.5 flex-shrink-0 rounded-full bg-primary-400" />
+                <li key={idx} className="flex items-start gap-3 text-foreground/80">
+                  <span className="mt-2 size-1.5 flex-shrink-0 rounded-full bg-primary-500" />
                   <span className="text-pretty">{point}</span>
                 </li>
               ))}
@@ -186,8 +186,8 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       {article.glossary && article.glossary.length > 0 && (
         <Card className="mt-4">
           <CardContent className="pt-4">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <span className="flex size-5 items-center justify-center rounded bg-amber-100 text-xs text-amber-700">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <span className="flex size-5 items-center justify-center rounded bg-amber-500/20 text-xs text-amber-400">
                 ?
               </span>
               用語解説
@@ -198,21 +198,21 @@ export default function ArticlePage({ params }: ArticlePageProps) {
                 return (
                   <div
                     key={idx}
-                    className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                    className="rounded-lg border border-border bg-surface-elevated p-3"
                   >
                     <div className="flex items-center gap-2">
-                      <Icon className="size-4 text-gray-500" />
-                      <span className="font-medium text-gray-900">
+                      <Icon className="size-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">
                         {item.termJa}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         ({item.term})
                       </span>
-                      <span className="ml-auto rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+                      <span className="ml-auto rounded-full bg-surface-overlay px-2 py-0.5 text-xs text-muted-foreground">
                         {glossaryTypeLabels[item.type]}
                       </span>
                     </div>
-                    <p className="mt-1.5 text-sm text-gray-600">
+                    <p className="mt-1.5 text-sm text-muted-foreground">
                       {item.description}
                     </p>
                   </div>
@@ -225,7 +225,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
 
       {/* Content */}
       <div className="mt-6">
-        <p className="text-pretty leading-relaxed text-gray-700 whitespace-pre-wrap">
+        <p className="text-pretty leading-relaxed text-foreground/80 whitespace-pre-wrap">
           {displayContent}
         </p>
       </div>
@@ -235,29 +235,29 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         href={article.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-6 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-4 transition-colors hover:bg-gray-100"
+        className="mt-6 flex items-center justify-between rounded-xl border border-border bg-surface-elevated p-4 transition-colors hover:bg-surface-overlay"
       >
         <div>
-          <p className="font-medium text-gray-900">Read full article</p>
-          <p className="text-sm text-gray-500">
+          <p className="font-medium text-foreground">Read full article</p>
+          <p className="text-sm text-muted-foreground">
             {new URL(article.url).hostname}
           </p>
         </div>
-        <ExternalLink className="size-5 text-gray-400" />
+        <ExternalLink className="size-5 text-muted-foreground" />
       </a>
 
       {/* Actions */}
-      <div className="mt-6 flex items-center justify-between border-y border-gray-200 py-3">
+      <div className="mt-6 flex items-center justify-between border-y border-border py-3">
         <div className="flex items-center gap-6">
-          <button className="flex items-center gap-2 text-gray-500 hover:text-primary-600">
+          <button className="flex items-center gap-2 text-muted-foreground hover:text-primary-500 transition-colors">
             <MessageCircle className="size-5" />
             <span className="tabular-nums">0</span>
           </button>
-          <button className="flex items-center gap-2 text-gray-500 hover:text-green-600">
+          <button className="flex items-center gap-2 text-muted-foreground hover:text-sentiment-positive transition-colors">
             <Repeat2 className="size-5" />
             <span className="tabular-nums">0</span>
           </button>
-          <button className="flex items-center gap-2 text-gray-500 hover:text-red-500">
+          <button className="flex items-center gap-2 text-muted-foreground hover:text-sentiment-negative transition-colors">
             <Heart className="size-5" />
             <span className="tabular-nums">0</span>
           </button>
@@ -275,22 +275,22 @@ export default function ArticlePage({ params }: ArticlePageProps) {
       {/* Related Articles */}
       {relatedArticles && relatedArticles.length > 0 && (
         <div className="mt-8">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Related Articles
+          <h2 className="mb-4 font-headline text-lg tracking-wider text-foreground">
+            RELATED ARTICLES
           </h2>
           <div className="space-y-3">
             {relatedArticles.slice(0, 3).map((related) => (
               <Link
                 key={related.id}
                 href={`/article/${related.id}`}
-                className="block rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
+                className="block rounded-lg border border-border bg-card p-3 transition-colors hover:bg-surface-elevated"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 line-clamp-2">
+                    <p className="font-medium text-foreground line-clamp-2">
                       {related.titleJa || related.title}
                     </p>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {related.source} &middot;{' '}
                       {formatRelativeTime(related.publishedAt)}
                     </p>
