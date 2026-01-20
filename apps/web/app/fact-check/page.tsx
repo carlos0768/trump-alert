@@ -115,26 +115,26 @@ function ArticleCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Avatar fallback={article.source.charAt(0)} size="sm" />
-          <span className="font-medium text-gray-900">{article.source}</span>
+          <span className="font-medium text-foreground">{article.source}</span>
         </div>
         <BiasBadge bias={bias} />
       </div>
-      <h3 className="mt-4 text-balance font-semibold text-gray-900">
+      <h3 className="mt-4 text-balance font-semibold text-foreground">
         {article.titleJa || article.title}
       </h3>
-      <p className="mt-1 text-xs text-gray-500">{article.title}</p>
-      <p className="mt-2 text-pretty text-sm text-gray-600">
+      <p className="mt-1 text-xs text-muted-foreground">{article.title}</p>
+      <p className="mt-2 text-pretty text-sm text-muted-foreground">
         {article.summary}
       </p>
       <div className="mt-4 flex items-center justify-between">
         <SentimentBadge sentiment={article.sentiment} />
-        <div className="flex items-center gap-3 text-xs text-gray-500">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span>{formatRelativeTime(new Date(article.publishedAt))}</span>
           <a
             href={article.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-primary-600 hover:underline"
+            className="flex items-center gap-1 text-primary-400 hover:underline"
           >
             Read <ExternalLink className="size-3" />
           </a>
@@ -172,16 +172,16 @@ export default function FactCheckPage() {
     <div className="mx-auto max-w-6xl px-4 py-6">
       {/* Header */}
       <div className="text-center">
-        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary-100">
-          <Scale className="size-8 text-primary-600" />
+        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-primary-600/20">
+          <Scale className="size-8 text-primary-400" />
         </div>
-        <h1 className="mt-4 text-2xl font-bold text-gray-900">
+        <h1 className="mt-4 font-headline text-2xl font-bold uppercase tracking-wide text-foreground">
           Fact Check Maker
         </h1>
-        <p className="mt-2 text-gray-500">
+        <p className="mt-2 text-muted-foreground">
           Compare how different sources cover the same story
         </p>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground/70">
           同じニュースを異なる視点のメディアがどう報じているかを比較
         </p>
       </div>
@@ -189,38 +189,38 @@ export default function FactCheckPage() {
       {/* Legend */}
       <div className="mt-8 flex items-center justify-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="size-3 rounded-full bg-blue-500" />
-          <span className="text-sm text-gray-600">Left-leaning sources</span>
+          <div className="size-3 rounded-full bg-bias-left" />
+          <span className="text-sm text-muted-foreground">Left-leaning sources</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="size-3 rounded-full bg-gray-500" />
-          <span className="text-sm text-gray-600">Center sources</span>
+          <div className="size-3 rounded-full bg-bias-center" />
+          <span className="text-sm text-muted-foreground">Center sources</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="size-3 rounded-full bg-red-500" />
-          <span className="text-sm text-gray-600">Right-leaning sources</span>
+          <div className="size-3 rounded-full bg-bias-right" />
+          <span className="text-sm text-muted-foreground">Right-leaning sources</span>
         </div>
       </div>
 
       {/* Loading State */}
       {isLoading ? (
         <div className="mt-12 flex items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-gray-400" />
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
         /* Comparisons */
         <div className="mt-8 space-y-6">
           {comparisons.map((comparison) => (
-            <Card key={comparison.id} className="overflow-hidden">
+            <Card key={comparison.id} className="overflow-hidden border-border bg-surface-elevated">
               {/* Topic Header */}
-              <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
+              <div className="border-b border-border bg-surface-muted px-6 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-semibold text-gray-900">
+                    <h2 className="font-headline font-semibold uppercase tracking-wide text-foreground">
                       {comparison.topicJa || comparison.topic}
                     </h2>
                     {comparison.topicJa && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {comparison.topic}
                       </p>
                     )}
@@ -237,14 +237,14 @@ export default function FactCheckPage() {
                 >
                   {/* Left Side */}
                   {comparison.left && (
-                    <div className="border-b border-gray-200 md:border-b-0 md:border-r">
+                    <div className="border-b border-border md:border-b-0 md:border-r">
                       <ArticleCard article={comparison.left} bias="Left" />
                     </div>
                   )}
 
                   {/* Center (if available) */}
                   {comparison.center && (
-                    <div className="border-b border-gray-200 md:border-b-0 md:border-r">
+                    <div className="border-b border-border md:border-b-0 md:border-r">
                       <ArticleCard article={comparison.center} bias="Center" />
                     </div>
                   )}
@@ -252,7 +252,7 @@ export default function FactCheckPage() {
                   {/* Center Divider (mobile, no center article) */}
                   {!comparison.center && (
                     <div className="flex items-center justify-center py-2 md:hidden">
-                      <ArrowLeftRight className="size-5 text-gray-400" />
+                      <ArrowLeftRight className="size-5 text-muted-foreground" />
                     </div>
                   )}
 
@@ -268,7 +268,7 @@ export default function FactCheckPage() {
           ))}
 
           {comparisons.length === 0 && (
-            <div className="py-12 text-center text-gray-500">
+            <div className="py-12 text-center text-muted-foreground">
               <p>比較可能な記事がありません</p>
               <p className="mt-2 text-sm">
                 左右両方のメディアから同じトピックの記事が必要です
@@ -279,7 +279,7 @@ export default function FactCheckPage() {
       )}
 
       {/* Disclaimer */}
-      <div className="mt-8 rounded-lg bg-gray-50 p-4 text-center text-sm text-gray-500">
+      <div className="mt-8 rounded-lg bg-surface-muted p-4 text-center text-sm text-muted-foreground">
         <p>
           This comparison is generated automatically by AI analysis. The bias
           classifications are based on general source tendencies and may not
