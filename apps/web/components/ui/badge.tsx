@@ -65,7 +65,7 @@ export function ImpactBadge({ level, className }: ImpactBadgeProps) {
     },
   };
 
-  const { bg, text, label, glow } = config[level];
+  const { bg, text, glow } = config[level];
 
   return (
     <span
@@ -164,7 +164,7 @@ export function SentimentBadge({ sentiment, className }: SentimentBadgeProps) {
     };
   };
 
-  const { bg, text, border, label, icon } = getConfig(sentiment);
+  const { bg, text, border, icon } = getConfig(sentiment);
 
   return (
     <span
