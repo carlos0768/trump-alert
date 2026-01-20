@@ -10,6 +10,7 @@ interface AvatarProps {
   fallback?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
+  ring?: boolean;
 }
 
 const sizeClasses = {
@@ -34,12 +35,14 @@ export function Avatar({
   fallback,
   size = 'md',
   className,
+  ring = false,
 }: AvatarProps) {
   return (
     <AvatarPrimitive.Root
       className={cn(
         'relative flex shrink-0 overflow-hidden rounded-full',
         sizeClasses[size],
+        ring && 'ring-2 ring-primary-500 ring-offset-2 ring-offset-background',
         className
       )}
     >
@@ -50,7 +53,7 @@ export function Avatar({
       />
       <AvatarPrimitive.Fallback
         className={cn(
-          'flex h-full w-full items-center justify-center rounded-full bg-primary-100 font-medium text-primary-700',
+          'flex h-full w-full items-center justify-center rounded-full bg-surface-elevated font-headline text-muted-foreground',
           fontSizeClasses[size]
         )}
       >

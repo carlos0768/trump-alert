@@ -4,25 +4,35 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 239 84% 67%;
+    /* CNN Breaking News Dark Theme */
+    --background: 222 47% 6%;        /* #0A1628 - Deep navy */
+    --foreground: 210 40% 98%;       /* #F8FAFC - Clean white */
+
+    --card: 222 47% 9%;              /* #0F172A - Slightly lighter navy */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;          /* #1E293B - Elevated surface */
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 350 79% 44%;          /* #C41E3A - Crimson red */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 33% 17%;        /* #243B53 - Muted navy */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 195 100% 45%;          /* #00A8E8 - Electric blue */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 100% 50%;       /* #FF0000 - Pure red for alerts */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 17%;
+    --ring: 350 79% 44%;
+
     --radius: 0.5rem;
   }
 }
@@ -31,27 +41,39 @@
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Headlines styling */
+  h1, h2, h3 {
+    @apply font-headline tracking-wide;
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - dark theme */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  background: hsl(222 47% 9%);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(217 33% 30%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: hsl(217 33% 40%);
 }
 
 /* Typography utilities */
@@ -61,4 +83,143 @@
 
 .text-pretty {
   text-wrap: pretty;
+}
+
+/* Breaking News Styles */
+@layer components {
+  .breaking-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1;
+    @apply bg-urgent text-white font-headline text-sm uppercase tracking-wider;
+    @apply animate-pulse-urgent;
+  }
+
+  .live-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1;
+    @apply bg-gradient-live text-white font-headline text-sm uppercase tracking-wider;
+    @apply rounded-sm;
+  }
+
+  .live-dot {
+    @apply size-2 rounded-full bg-white animate-pulse;
+  }
+
+  /* News ticker */
+  .ticker-container {
+    @apply overflow-hidden bg-primary-600 text-white;
+  }
+
+  .ticker-content {
+    @apply flex whitespace-nowrap animate-ticker;
+  }
+
+  .ticker-item {
+    @apply flex items-center gap-4 px-8 py-2 font-headline text-sm uppercase tracking-wider;
+  }
+
+  .ticker-divider {
+    @apply size-1.5 rounded-full bg-white/50;
+  }
+
+  /* Card styles for news */
+  .news-card {
+    @apply relative bg-card border border-border/50 rounded-lg overflow-hidden;
+    @apply transition-all duration-300;
+    @apply hover:border-primary-600/50 hover:shadow-lg hover:shadow-primary-900/20;
+  }
+
+  .news-card-urgent {
+    @apply border-urgent/50 shadow-lg shadow-urgent/10;
+    animation: breaking-glow 2s ease-in-out infinite;
+  }
+
+  /* Impact badges */
+  .impact-badge {
+    @apply inline-flex items-center justify-center px-2 py-0.5;
+    @apply font-headline text-xs uppercase tracking-wider;
+    @apply rounded-sm;
+  }
+
+  .impact-s {
+    @apply bg-impact-s text-white;
+  }
+
+  .impact-a {
+    @apply bg-impact-a text-white;
+  }
+
+  .impact-b {
+    @apply bg-impact-b text-black;
+  }
+
+  .impact-c {
+    @apply bg-impact-c text-white;
+  }
+
+  /* Sentiment indicator */
+  .sentiment-bar {
+    @apply h-1 rounded-full;
+    background: linear-gradient(90deg, 
+      #EF4444 0%, 
+      #F59E0B 25%, 
+      #6B7280 50%, 
+      #22C55E 75%, 
+      #10B981 100%
+    );
+  }
+
+  /* Data display */
+  .data-value {
+    @apply font-mono tabular-nums text-foreground;
+  }
+
+  .data-change-positive {
+    @apply text-sentiment-positive;
+  }
+
+  .data-change-negative {
+    @apply text-sentiment-negative;
+  }
+
+  /* Glow effects */
+  .glow-red {
+    box-shadow: 0 0 20px rgba(196, 30, 58, 0.4);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(0, 168, 232, 0.4);
+  }
+
+  /* Section headers */
+  .section-header {
+    @apply flex items-center gap-3 mb-4;
+  }
+
+  .section-title {
+    @apply font-headline text-lg uppercase tracking-wider text-foreground;
+  }
+
+  .section-line {
+    @apply flex-1 h-px bg-gradient-to-r from-border to-transparent;
+  }
+}
+
+/* Stagger animations for lists */
+@layer utilities {
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
+
+  .animate-on-scroll {
+    @apply opacity-0;
+    animation: slide-in-up 0.5s ease-out forwards;
+  }
+}
+
+/* Focus styles */
+@layer base {
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
+  }
 }

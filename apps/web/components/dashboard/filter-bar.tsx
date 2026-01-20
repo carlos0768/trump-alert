@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FilterBarProps {
@@ -15,24 +15,24 @@ interface FilterState {
 }
 
 const impactOptions = [
-  { value: 'S', label: 'S', color: 'bg-red-600' },
-  { value: 'A', label: 'A', color: 'bg-orange-500' },
-  { value: 'B', label: 'B', color: 'bg-yellow-500' },
-  { value: 'C', label: 'C', color: 'bg-gray-500' },
+  { value: 'S', label: 'S', description: 'CRITICAL' },
+  { value: 'A', label: 'A', description: 'HIGH' },
+  { value: 'B', label: 'B', description: 'MEDIUM' },
+  { value: 'C', label: 'C', description: 'LOW' },
 ];
 
 const biasOptions = [
-  { value: 'Left', label: 'Left', color: 'bg-blue-500' },
-  { value: 'Center', label: 'Center', color: 'bg-gray-500' },
-  { value: 'Right', label: 'Right', color: 'bg-red-500' },
+  { value: 'Left', label: '←', description: 'LEFT' },
+  { value: 'Center', label: '○', description: 'CENTER' },
+  { value: 'Right', label: '→', description: 'RIGHT' },
 ];
 
 const timeRanges = [
-  { value: '1h', label: '1h' },
-  { value: '6h', label: '6h' },
-  { value: '24h', label: '24h' },
-  { value: '7d', label: '7d' },
-  { value: '30d', label: '30d' },
+  { value: '1h', label: '1H' },
+  { value: '6h', label: '6H' },
+  { value: '24h', label: '24H' },
+  { value: '7d', label: '7D' },
+  { value: '30d', label: '30D' },
 ];
 
 export function FilterBar({ onFilterChange }: FilterBarProps) {
@@ -44,7 +44,6 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
   });
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -55,7 +54,6 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Count active filters
   const activeFilterCount =
     filters.impactLevels.length +
     filters.biases.length +
@@ -85,22 +83,28 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
     onFilterChange?.(newFilters);
   };
 
+  const clearFilters = () => {
+    const newFilters = { impactLevels: [], biases: [], timeRange: '24h' };
+    setFilters(newFilters);
+    onFilterChange?.(newFilters);
+  };
+
   return (
     <div className="relative" ref={menuRef}>
       {/* Filter Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all',
+          'flex items-center gap-2 rounded-lg border px-3 py-2 font-headline text-xs tracking-wider transition-all',
           isOpen || activeFilterCount > 0
-            ? 'border-primary-500 bg-primary-50 text-primary-700'
-            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            ? 'border-primary-500 bg-primary-500/10 text-primary-400'
+            : 'border-border bg-surface-elevated text-muted-foreground hover:bg-surface-overlay hover:text-foreground'
         )}
       >
         <SlidersHorizontal className="size-4" />
-        <span>Filters</span>
+        <span>FILTERS</span>
         {activeFilterCount > 0 && (
-          <span className="flex size-5 items-center justify-center rounded-full bg-primary-600 text-xs text-white">
+          <span className="flex size-5 items-center justify-center rounded bg-primary-500 font-mono text-xs text-white">
             {activeFilterCount}
           </span>
         )}
@@ -108,23 +112,33 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-border bg-surface-elevated p-4 shadow-xl animate-slide-in-up">
           {/* Header */}
-          <div className="mb-3 flex items-center justify-between">
-            <span className="font-medium text-gray-900">Filters</span>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            >
-              <X className="size-4" />
-            </button>
+          <div className="mb-4 flex items-center justify-between">
+            <span className="font-headline text-sm tracking-wider text-foreground">FILTERS</span>
+            <div className="flex items-center gap-2">
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="font-headline text-xs tracking-wider text-primary-400 hover:text-primary-300"
+                >
+                  CLEAR ALL
+                </button>
+              )}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="rounded p-1 text-muted-foreground hover:bg-surface-overlay hover:text-foreground transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Impact Level Filter */}
             <div>
-              <span className="mb-2 block text-xs font-medium text-gray-500">
-                Impact Level
+              <span className="mb-2 block font-headline text-xs tracking-wider text-muted-foreground">
+                IMPACT LEVEL
               </span>
               <div className="flex gap-1">
                 {impactOptions.map((option) => (
@@ -132,13 +146,20 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
                     key={option.value}
                     onClick={() => toggleImpact(option.value)}
                     className={cn(
-                      'flex size-8 items-center justify-center rounded-md text-xs font-bold transition-all',
+                      'flex flex-1 flex-col items-center justify-center rounded-lg py-2 transition-all',
                       filters.impactLevels.includes(option.value)
-                        ? cn(option.color, 'text-white')
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? cn(
+                            'text-white',
+                            option.value === 'S' && 'bg-impact-s shadow-lg shadow-impact-s/30',
+                            option.value === 'A' && 'bg-impact-a shadow-lg shadow-impact-a/30',
+                            option.value === 'B' && 'bg-impact-b text-black',
+                            option.value === 'C' && 'bg-impact-c'
+                          )
+                        : 'bg-surface-overlay text-muted-foreground hover:bg-surface hover:text-foreground'
                     )}
                   >
-                    {option.label}
+                    <span className="font-headline text-lg">{option.label}</span>
+                    <span className="text-[9px] opacity-75">{option.description}</span>
                   </button>
                 ))}
               </div>
@@ -146,8 +167,8 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
 
             {/* Bias Filter */}
             <div>
-              <span className="mb-2 block text-xs font-medium text-gray-500">
-                Bias
+              <span className="mb-2 block font-headline text-xs tracking-wider text-muted-foreground">
+                MEDIA BIAS
               </span>
               <div className="flex gap-1">
                 {biasOptions.map((option) => (
@@ -155,13 +176,19 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
                     key={option.value}
                     onClick={() => toggleBias(option.value)}
                     className={cn(
-                      'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
+                      'flex flex-1 flex-col items-center justify-center rounded-lg py-2 transition-all',
                       filters.biases.includes(option.value)
-                        ? cn(option.color, 'text-white')
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? cn(
+                            'text-white',
+                            option.value === 'Left' && 'bg-bias-left shadow-lg shadow-bias-left/30',
+                            option.value === 'Center' && 'bg-bias-center',
+                            option.value === 'Right' && 'bg-bias-right shadow-lg shadow-bias-right/30'
+                          )
+                        : 'bg-surface-overlay text-muted-foreground hover:bg-surface hover:text-foreground'
                     )}
                   >
-                    {option.label}
+                    <span className="text-lg">{option.label}</span>
+                    <span className="font-headline text-[9px] tracking-wider">{option.description}</span>
                   </button>
                 ))}
               </div>
@@ -169,19 +196,20 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
 
             {/* Time Range Filter */}
             <div>
-              <span className="mb-2 block text-xs font-medium text-gray-500">
-                Time Range
+              <span className="mb-2 flex items-center gap-1 font-headline text-xs tracking-wider text-muted-foreground">
+                <Clock className="size-3" />
+                TIME RANGE
               </span>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex gap-1">
                 {timeRanges.map((range) => (
                   <button
                     key={range.value}
                     onClick={() => setTimeRange(range.value)}
                     className={cn(
-                      'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
+                      'flex-1 rounded-lg py-2 font-headline text-xs tracking-wider transition-all',
                       filters.timeRange === range.value
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+                        : 'bg-surface-overlay text-muted-foreground hover:bg-surface hover:text-foreground'
                     )}
                   >
                     {range.label}

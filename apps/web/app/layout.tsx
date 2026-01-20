@@ -1,21 +1,28 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Bebas_Neue, DM_Sans } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { QueryProvider } from '@/components/providers';
 
-const inter = Inter({
+const bebasNeue = Bebas_Neue({
+  weight: '400',
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-inter',
+  variable: '--font-bebas',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
 });
 
 export const metadata: Metadata = {
-  title: 'トランプトラッカー - トランプ関連ニュース速報',
+  title: 'TRUMP TRACKER - Breaking News & Live Updates',
   description:
-    'トランプ関連のニュース、SNS、市場動向をリアルタイムで監視・分析。大統領令や法案も追跡。',
-  keywords: ['トランプ', 'ニュース', '速報', '大統領令', 'DJT', 'Truth Social'],
+    'Real-time Trump news monitoring, sentiment analysis, and market impact tracking. Breaking alerts delivered instantly.',
+  keywords: ['Trump', 'Breaking News', 'Live Updates', 'DJT', 'Truth Social', 'Politics'],
 };
 
 export default function RootLayout({
@@ -24,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={inter.variable}>
-      <body className="min-h-dvh bg-gray-50 font-sans">
+    <html lang="ja" className={`${bebasNeue.variable} ${dmSans.variable}`}>
+      <body className="min-h-dvh bg-background font-sans">
         <QueryProvider>
           <div className="flex h-dvh overflow-hidden">
             {/* Left Sidebar */}

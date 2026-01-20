@@ -16,12 +16,21 @@ const sizeClasses = {
 export function TrumpSpinner({ size = 'md', className }: TrumpSpinnerProps) {
   return (
     <div className={cn('flex items-center justify-center', className)}>
-      <img
-        src="/trump-face.png"
-        alt="Loading..."
-        className={cn(sizeClasses[size], 'animate-spin')}
-        style={{ animationDuration: '1s' }}
-      />
+      <div className="relative">
+        <img
+          src="/trump-face.png"
+          alt="Loading..."
+          className={cn(sizeClasses[size], 'animate-spin rounded-full')}
+          style={{ animationDuration: '1s' }}
+        />
+        {/* Glow effect */}
+        <div
+          className={cn(
+            'absolute inset-0 rounded-full bg-primary-500/20 blur-xl animate-pulse',
+            sizeClasses[size]
+          )}
+        />
+      </div>
     </div>
   );
 }
@@ -29,9 +38,11 @@ export function TrumpSpinner({ size = 'md', className }: TrumpSpinnerProps) {
 // Full page loading overlay
 export function TrumpLoadingOverlay() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3">
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-background">
       <TrumpSpinner size="lg" />
-      <p className="text-sm text-gray-500 animate-pulse">Loading...</p>
+      <p className="font-headline text-sm tracking-wider text-muted-foreground animate-pulse">
+        LOADING...
+      </p>
     </div>
   );
 }

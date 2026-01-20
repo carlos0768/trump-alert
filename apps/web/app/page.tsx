@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Zap, RefreshCw } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Radio } from 'lucide-react';
 import { TrumpSpinner } from '@/components/ui';
 import { ArticleCard } from '@/components/article';
 import { TrumpIndexChart, type TrumpIndexDataPoint } from '@/components/charts';
@@ -13,6 +13,7 @@ import {
 } from '@/components/dashboard';
 import { ExecutiveOrderWidget } from '@/components/executive-order';
 import { Button } from '@/components/ui/button';
+import { LiveBadge } from '@/components/ui/badge';
 import {
   useArticles,
   useTrumpIndex,
@@ -29,7 +30,6 @@ export default function DashboardPage() {
   const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll to hide/show feed header on mobile
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -38,14 +38,10 @@ export default function DashboardPage() {
       const currentScrollY = container.scrollTop;
       const scrollDelta = currentScrollY - lastScrollY.current;
 
-      // Only hide/show on mobile (lg breakpoint = 1024px)
       if (window.innerWidth < 1024) {
-        // Scrolling down more than 10px -> hide
         if (scrollDelta > 10 && currentScrollY > 60) {
           setIsFeedHeaderVisible(false);
-        }
-        // Scrolling up more than 10px -> show
-        else if (scrollDelta < -10) {
+        } else if (scrollDelta < -10) {
           setIsFeedHeaderVisible(true);
         }
       } else {
@@ -59,7 +55,6 @@ export default function DashboardPage() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch real data from API with filters
   const {
     data: articlesData,
     isLoading: articlesLoading,
@@ -74,10 +69,8 @@ export default function DashboardPage() {
   const { data: trendingTopics, isLoading: topicsLoading } =
     useTrendingTopics();
 
-  // Flatten paginated articles
   const articles = articlesData?.pages.flatMap((page) => page.articles) ?? [];
 
-  // Calculate current Trump Index (use mock data as fallback)
   const indexData: TrumpIndexDataPoint[] =
     trumpIndexData && trumpIndexData.length > 0
       ? trumpIndexData
@@ -88,7 +81,6 @@ export default function DashboardPage() {
   const previousIndex = getSentiment(indexData[indexData.length - 2]);
   const indexChange = currentIndex - previousIndex;
 
-  // Stock data with fallback
   const stock = stockData ?? {
     symbol: 'DJT',
     price: 34.56,
@@ -97,13 +89,11 @@ export default function DashboardPage() {
     volume: 12500000,
   };
 
-  // Trending topics with fallback
   const topics =
     trendingTopics && trendingTopics.length > 0
       ? trendingTopics.map((t, i) => ({ ...t, rank: i + 1 }))
       : mockTrendingTopics;
 
-  // Handle filter changes
   const handleFilterChange = (newFilters: {
     impactLevels: string[];
     biases: string[];
@@ -119,140 +109,217 @@ export default function DashboardPage() {
     });
   };
 
-  return (
-    <div className="flex h-full">
-      {/* Main Feed */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto border-r border-gray-200"
-      >
-        {/* Feed Header */}
-        <div
-          className={cn(
-            'sticky top-0 z-10 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur-sm transition-transform duration-300 lg:translate-y-0',
-            isFeedHeaderVisible ? 'translate-y-0' : '-translate-y-full'
-          )}
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-gray-900">Live Feed</h1>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => refetchArticles()}
-              >
-                <RefreshCw className="size-4" />
-              </Button>
-              <Button size="sm" className="gap-1.5">
-                <Zap className="size-3.5" />
-                <span>Live</span>
-              </Button>
-            </div>
+  // Count urgent articles
+  const urgentCount = articles.filter((a) => a.impactLevel === 'S').length;
 
-            {/* Filter Bar - Right aligned */}
-            <div className="flex-1 flex justify-end">
+  return (
+    <div className="flex h-full flex-col">
+      {/* Breaking News Ticker */}
+      <NewsTicker articles={articles.slice(0, 5)} />
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Feed */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto border-r border-border"
+        >
+          {/* Feed Header */}
+          <div
+            className={cn(
+              'sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md transition-transform duration-300 lg:translate-y-0',
+              isFeedHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+            )}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <h1 className="font-headline text-xl tracking-wider text-foreground">
+                  LIVE FEED
+                </h1>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => refetchArticles()}
+                  className="text-muted-foreground"
+                >
+                  <RefreshCw className="size-4" />
+                </Button>
+                <LiveBadge />
+                
+                {urgentCount > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-lg bg-urgent/10 px-2.5 py-1 text-urgent">
+                    <AlertTriangle className="size-3.5" />
+                    <span className="font-headline text-xs tracking-wider">
+                      {urgentCount} CRITICAL
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Filter Bar */}
               <FilterBar onFilterChange={handleFilterChange} />
             </div>
           </div>
-        </div>
 
-        {/* Articles Feed */}
-        <div className="divide-y divide-gray-100">
-          {articlesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <TrumpSpinner size="lg" />
-            </div>
-          ) : articles.length > 0 ? (
-            articles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))
-          ) : (
-            <div className="py-12 text-center text-gray-500">
-              <p>まだ記事がありません</p>
-              <p className="mt-2 text-sm">
-                ニュースを収集するには、APIの /api/collect
-                エンドポイントを呼び出してください
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Load More */}
-        <div className="p-4">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => fetchNextPage()}
-            disabled={!hasNextPage || isFetchingNextPage}
-          >
-            {isFetchingNextPage ? (
-              <>
-                <TrumpSpinner size="sm" className="mr-2" />
-                Loading...
-              </>
-            ) : hasNextPage ? (
-              'Load More'
+          {/* Articles Feed */}
+          <div className="divide-y divide-border">
+            {articlesLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <TrumpSpinner size="lg" />
+              </div>
+            ) : articles.length > 0 ? (
+              articles.map((article, index) => (
+                <div
+                  key={article.id}
+                  className={cn(
+                    'animate-fade-in',
+                    index < 5 && `stagger-${index + 1}`
+                  )}
+                >
+                  <ArticleCard article={article} />
+                </div>
+              ))
             ) : (
-              'No more articles'
+              <EmptyState />
             )}
-          </Button>
+          </div>
+
+          {/* Load More */}
+          {articles.length > 0 && (
+            <div className="p-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => fetchNextPage()}
+                disabled={!hasNextPage || isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <TrumpSpinner size="sm" className="mr-2" />
+                    LOADING...
+                  </>
+                ) : hasNextPage ? (
+                  'LOAD MORE'
+                ) : (
+                  'END OF FEED'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Right Sidebar */}
-      <aside className="hidden w-80 flex-shrink-0 overflow-y-auto p-4 xl:block">
-        <div className="space-y-4">
-          {/* Trump Index Chart */}
-          {indexLoading ? (
-            <div className="flex h-48 items-center justify-center rounded-lg bg-white">
-              <TrumpSpinner size="md" />
-            </div>
-          ) : (
-            <TrumpIndexChart
-              data={indexData}
-              currentIndex={currentIndex}
-              change={indexChange}
-            />
-          )}
+        {/* Right Sidebar */}
+        <aside className="hidden w-80 flex-shrink-0 overflow-y-auto p-4 xl:block">
+          <div className="space-y-4">
+            {/* Trump Index Chart */}
+            {indexLoading ? (
+              <WidgetSkeleton height="h-64" />
+            ) : (
+              <TrumpIndexChart
+                data={indexData}
+                currentIndex={currentIndex}
+                change={indexChange}
+              />
+            )}
 
-          {/* DJT Stock Widget */}
-          {stockLoading ? (
-            <div className="flex h-24 items-center justify-center rounded-lg bg-white">
-              <TrumpSpinner size="md" />
-            </div>
-          ) : (
-            <StockWidget stock={stock} />
-          )}
+            {/* DJT Stock Widget */}
+            {stockLoading ? (
+              <WidgetSkeleton height="h-32" />
+            ) : (
+              <StockWidget stock={stock} />
+            )}
 
-          {/* Executive Orders Widget */}
-          <ExecutiveOrderWidget />
+            {/* Executive Orders Widget */}
+            <ExecutiveOrderWidget />
 
-          {/* Trending Topics */}
-          {topicsLoading ? (
-            <div className="flex h-48 items-center justify-center rounded-lg bg-white">
-              <TrumpSpinner size="md" />
-            </div>
-          ) : (
-            <TrendingTopics topics={topics} />
-          )}
+            {/* Trending Topics */}
+            {topicsLoading ? (
+              <WidgetSkeleton height="h-48" />
+            ) : (
+              <TrendingTopics topics={topics} />
+            )}
 
-          {/* Footer Links */}
-          <div className="text-center text-xs text-gray-400">
-            <p>Trump Alert &copy; 2024</p>
-            <div className="mt-1 flex justify-center gap-3">
-              <a href="#" className="hover:text-gray-600">
-                Terms
-              </a>
-              <a href="#" className="hover:text-gray-600">
-                Privacy
-              </a>
-              <a href="#" className="hover:text-gray-600">
-                About
-              </a>
+            {/* Footer Links */}
+            <div className="text-center">
+              <p className="font-headline text-xs tracking-wider text-muted-foreground">
+                TRUMP TRACKER © 2024
+              </p>
+              <div className="mt-2 flex justify-center gap-4">
+                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Terms
+                </a>
+                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy
+                </a>
+                <a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  About
+                </a>
+              </div>
             </div>
           </div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+// News Ticker Component
+interface NewsTickerProps {
+  articles: Array<{ id: string; title: string; titleJa?: string; impactLevel: string }>;
+}
+
+function NewsTicker({ articles }: NewsTickerProps) {
+  if (articles.length === 0) return null;
+
+  // Duplicate for seamless loop
+  const tickerItems = [...articles, ...articles];
+
+  return (
+    <div className="ticker-container border-b border-primary-700">
+      <div className="ticker-content">
+        {tickerItems.map((article, index) => (
+          <div key={`${article.id}-${index}`} className="ticker-item">
+            {article.impactLevel === 'S' && (
+              <span className="flex items-center gap-1 text-white font-bold">
+                <AlertTriangle className="size-3" />
+                BREAKING
+              </span>
+            )}
+            <span className="text-white/90">
+              {article.titleJa || article.title}
+            </span>
+            <span className="ticker-divider" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Empty State Component
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4">
+      <div className="relative mb-4">
+        <Radio className="size-16 text-muted-foreground/30" />
+        <div className="absolute inset-0 animate-ping">
+          <Radio className="size-16 text-primary-500/20" />
         </div>
-      </aside>
+      </div>
+      <h3 className="font-headline text-xl tracking-wider text-foreground mb-2">
+        NO NEWS YET
+      </h3>
+      <p className="text-sm text-muted-foreground text-center max-w-sm">
+        We're monitoring all sources. Breaking news will appear here as soon as it's detected.
+      </p>
+    </div>
+  );
+}
+
+// Widget Skeleton Component
+function WidgetSkeleton({ height }: { height: string }) {
+  return (
+    <div className={cn('flex items-center justify-center rounded-lg bg-card border border-border', height)}>
+      <TrumpSpinner size="md" />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Hash, Flame } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface TrendingTopic {
   id?: string;
@@ -18,33 +19,71 @@ interface TrendingTopicsProps {
 
 export function TrendingTopics({ topics }: TrendingTopicsProps) {
   return (
-    <Card>
+    <Card variant="elevated">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base font-medium text-gray-700">
-          <TrendingUp className="size-4 text-primary-500" />
-          Trending Topics
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Flame className="size-4 text-impact-a" />
+          TRENDING NOW
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="space-y-3">
-          {topics.map((topic, index) => (
-            <div
-              key={topic.id ?? topic.rank ?? index}
-              className="flex items-center justify-between rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-400">
-                  {topic.rank ?? index + 1}
-                </span>
-                <span className="text-sm font-medium text-gray-900">
-                  #{topic.name}
-                </span>
-              </div>
-              <span className="text-xs text-gray-500 tabular-nums">
-                {topic.articleCount ?? topic.count ?? 0} articles
-              </span>
-            </div>
-          ))}
+        <div className="space-y-1">
+          {topics.map((topic, index) => {
+            const rank = topic.rank ?? index + 1;
+            const count = topic.articleCount ?? topic.count ?? 0;
+            const TrendIcon = topic.trend === 'up' 
+              ? TrendingUp 
+              : topic.trend === 'down' 
+                ? TrendingDown 
+                : Minus;
+            
+            return (
+              <button
+                key={topic.id ?? topic.rank ?? index}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-lg px-3 py-2.5 transition-all',
+                  'hover:bg-surface-overlay',
+                  rank === 1 && 'bg-primary-500/10 hover:bg-primary-500/20'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      'flex size-6 items-center justify-center rounded font-headline text-sm',
+                      rank === 1
+                        ? 'bg-primary-500 text-white'
+                        : rank <= 3
+                          ? 'bg-surface-overlay text-foreground'
+                          : 'text-muted-foreground'
+                    )}
+                  >
+                    {rank}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Hash className="size-3 text-muted-foreground" />
+                    <span className="font-headline text-sm tracking-wider text-foreground">
+                      {topic.name.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                    {count}
+                  </span>
+                  {topic.trend && (
+                    <TrendIcon
+                      className={cn(
+                        'size-3',
+                        topic.trend === 'up' && 'text-sentiment-positive',
+                        topic.trend === 'down' && 'text-sentiment-negative',
+                        topic.trend === 'stable' && 'text-muted-foreground'
+                      )}
+                    />
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

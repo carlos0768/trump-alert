@@ -1,5 +1,12 @@
 export { Avatar } from './avatar';
-export { Badge, ImpactBadge, BiasBadge, SentimentBadge } from './badge';
+export {
+  Badge,
+  ImpactBadge,
+  BiasBadge,
+  SentimentBadge,
+  LiveBadge,
+  BreakingBadge,
+} from './badge';
 export { Button } from './button';
 export {
   Card,

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, DollarSign, BarChart3 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -20,26 +20,29 @@ export function StockWidget({ stock }: StockWidgetProps) {
   const isPositive = stock.change >= 0;
 
   return (
-    <Card>
+    <Card variant="elevated">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium text-gray-700">
-            {stock.symbol} Stock
+          <CardTitle className="flex items-center gap-2 text-base">
+            <DollarSign className="size-4 text-accent" />
+            {stock.symbol}
           </CardTitle>
-          <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+          <span className="rounded bg-accent/20 px-2 py-0.5 font-mono text-xs text-accent">
             NASDAQ
           </span>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-bold tabular-nums text-gray-900">
+          <span className="font-mono text-3xl font-bold tabular-nums text-foreground">
             ${stock.price.toFixed(2)}
           </span>
           <div
             className={cn(
-              'flex items-center gap-0.5 text-sm font-medium',
-              isPositive ? 'text-green-600' : 'text-red-600'
+              'flex items-center gap-0.5 rounded-md px-2 py-1 text-sm font-bold',
+              isPositive
+                ? 'bg-sentiment-positive/20 text-sentiment-positive'
+                : 'bg-sentiment-negative/20 text-sentiment-negative'
             )}
           >
             {isPositive ? (
@@ -47,21 +50,49 @@ export function StockWidget({ stock }: StockWidgetProps) {
             ) : (
               <ArrowDownRight className="size-4" />
             )}
-            <span className="tabular-nums">
+            <span className="font-mono tabular-nums">
               {isPositive ? '+' : ''}
-              {stock.change.toFixed(2)} ({isPositive ? '+' : ''}
+              {stock.change.toFixed(2)}
+            </span>
+            <span className="font-mono tabular-nums text-xs opacity-75">
+              ({isPositive ? '+' : ''}
               {stock.changePercent.toFixed(2)}%)
             </span>
           </div>
         </div>
-        <p className="mt-2 text-xs text-gray-500">
-          Volume:{' '}
-          <span className="tabular-nums">
+        
+        {/* Volume bar */}
+        <div className="mt-4 flex items-center gap-2">
+          <BarChart3 className="size-4 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Volume:</span>
+          <span className="font-mono text-xs text-foreground tabular-nums">
             {typeof stock.volume === 'number'
               ? stock.volume.toLocaleString()
               : stock.volume}
           </span>
-        </p>
+        </div>
+        
+        {/* Mini trend indicator */}
+        <div className="mt-3 flex h-8 items-end gap-0.5">
+          {Array.from({ length: 12 }).map((_, i) => {
+            const height = 20 + Math.random() * 80;
+            const isLast = i === 11;
+            return (
+              <div
+                key={i}
+                className={cn(
+                  'flex-1 rounded-t transition-all',
+                  isLast
+                    ? isPositive
+                      ? 'bg-sentiment-positive'
+                      : 'bg-sentiment-negative'
+                    : 'bg-surface-overlay'
+                )}
+                style={{ height: `${height}%` }}
+              />
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

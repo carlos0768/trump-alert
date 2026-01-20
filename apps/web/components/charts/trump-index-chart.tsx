@@ -4,7 +4,6 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
@@ -12,7 +11,7 @@ import {
   ComposedChart,
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface TrumpIndexDataPoint {
@@ -29,14 +28,12 @@ interface TrumpIndexChartProps {
   change: number;
 }
 
-// Normalized data type for internal use
 interface NormalizedDataPoint {
   time: string;
   sentiment: number;
   articleCount: number;
 }
 
-// Helper to normalize data from different sources (API uses hour/avgSentiment, mock uses time/sentiment)
 function normalizeData(data: TrumpIndexDataPoint[]): NormalizedDataPoint[] {
   return data.map((item) => ({
     time: item.time ?? item.hour ?? '',
@@ -57,23 +54,24 @@ export function TrumpIndexChart({
   const TrendIcon = isPositive ? TrendingUp : isNeutral ? Minus : TrendingDown;
 
   return (
-    <Card>
+    <Card variant="elevated">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium text-gray-700">
-            Trump Index
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="size-4 text-primary-500" />
+            TRUMP INDEX
           </CardTitle>
-          <span className="text-xs text-gray-500">Today</span>
+          <span className="font-mono text-xs text-muted-foreground">TODAY</span>
         </div>
-        <div className="flex items-baseline gap-3">
+        <div className="flex items-baseline gap-3 mt-2">
           <span
             className={cn(
-              'text-3xl font-bold tabular-nums',
+              'font-mono text-4xl font-bold tabular-nums',
               isPositive
-                ? 'text-green-600'
+                ? 'text-sentiment-positive'
                 : isNeutral
-                  ? 'text-gray-600'
-                  : 'text-red-600'
+                  ? 'text-muted-foreground'
+                  : 'text-sentiment-negative'
             )}
           >
             {currentIndex > 0 ? '+' : ''}
@@ -81,16 +79,16 @@ export function TrumpIndexChart({
           </span>
           <div
             className={cn(
-              'flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+              'flex items-center gap-1 rounded-md px-2 py-1 text-xs font-bold',
               isPositive
-                ? 'bg-green-100 text-green-700'
+                ? 'bg-sentiment-positive/20 text-sentiment-positive'
                 : isNeutral
-                  ? 'bg-gray-100 text-gray-700'
-                  : 'bg-red-100 text-red-700'
+                  ? 'bg-muted/20 text-muted-foreground'
+                  : 'bg-sentiment-negative/20 text-sentiment-negative'
             )}
           >
             <TrendIcon className="size-3" />
-            <span className="tabular-nums">
+            <span className="font-mono tabular-nums">
               {isPositive ? '+' : ''}
               {change.toFixed(2)}
             </span>
@@ -112,8 +110,8 @@ export function TrumpIndexChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient
                   id="negativeGradient"
@@ -122,27 +120,22 @@ export function TrumpIndexChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#EF4444" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#e5e7eb"
-                vertical={false}
-              />
               <XAxis
                 dataKey="time"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                tick={{ fontSize: 10, fill: '#64748B' }}
                 interval="preserveStartEnd"
               />
               <YAxis
                 domain={[-1, 1]}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                tick={{ fontSize: 10, fill: '#64748B' }}
                 tickFormatter={(value) => value.toFixed(1)}
               />
               <Tooltip
@@ -150,22 +143,22 @@ export function TrumpIndexChart({
                   if (active && payload && payload.length) {
                     const data = payload[0].payload as NormalizedDataPoint;
                     return (
-                      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-                        <p className="text-xs text-gray-500">{data.time}</p>
+                      <div className="rounded-lg border border-border bg-surface-elevated p-3 shadow-xl">
+                        <p className="font-mono text-xs text-muted-foreground">{data.time}</p>
                         <p
                           className={cn(
-                            'text-lg font-semibold tabular-nums',
+                            'font-mono text-xl font-bold tabular-nums',
                             data.sentiment > 0
-                              ? 'text-green-600'
+                              ? 'text-sentiment-positive'
                               : data.sentiment < 0
-                                ? 'text-red-600'
-                                : 'text-gray-600'
+                                ? 'text-sentiment-negative'
+                                : 'text-muted-foreground'
                           )}
                         >
                           {data.sentiment > 0 ? '+' : ''}
                           {data.sentiment.toFixed(2)}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {data.articleCount} articles
                         </p>
                       </div>
@@ -174,35 +167,55 @@ export function TrumpIndexChart({
                   return null;
                 }}
               />
-              <ReferenceLine y={0} stroke="#d1d5db" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke="#334155" strokeDasharray="3 3" />
               <Area
                 type="monotone"
                 dataKey="sentiment"
                 stroke="none"
-                fill="url(#positiveGradient)"
+                fill={currentIndex >= 0 ? 'url(#positiveGradient)' : 'url(#negativeGradient)'}
                 fillOpacity={1}
                 baseLine={0}
               />
               <Line
                 type="monotone"
                 dataKey="sentiment"
-                stroke={currentIndex >= 0 ? '#22c55e' : '#ef4444'}
+                stroke={currentIndex >= 0 ? '#10B981' : '#EF4444'}
                 strokeWidth={2}
                 dot={false}
                 activeDot={{
-                  r: 4,
-                  fill: currentIndex >= 0 ? '#22c55e' : '#ef4444',
+                  r: 6,
+                  fill: currentIndex >= 0 ? '#10B981' : '#EF4444',
+                  stroke: '#0F172A',
+                  strokeWidth: 2,
                 }}
               />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+        
+        {/* Sentiment bar indicator */}
+        <div className="mt-4 space-y-2">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>NEGATIVE</span>
+            <span>NEUTRAL</span>
+            <span>POSITIVE</span>
+          </div>
+          <div className="sentiment-bar h-2 rounded-full" />
+          <div className="relative h-0">
+            <div
+              className="absolute -top-4 size-3 rounded-full bg-foreground border-2 border-surface transition-all"
+              style={{
+                left: `${((currentIndex + 1) / 2) * 100}%`,
+                transform: 'translateX(-50%)',
+              }}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// Generate mock data for demo
 export function generateMockTrumpIndexData(): TrumpIndexDataPoint[] {
   const hours = [
     '00:00',
@@ -221,7 +234,7 @@ export function generateMockTrumpIndexData(): TrumpIndexDataPoint[] {
 
   return hours.map((time) => ({
     time,
-    sentiment: Math.random() * 2 - 1, // -1 to 1
+    sentiment: Math.random() * 2 - 1,
     articleCount: Math.floor(Math.random() * 50) + 10,
   }));
 }
