@@ -23,6 +23,16 @@ export const metadata: Metadata = {
   description:
     'Real-time Trump news monitoring, sentiment analysis, and market impact tracking. Breaking alerts delivered instantly.',
   keywords: ['Trump', 'Breaking News', 'Live Updates', 'DJT', 'Truth Social', 'Politics'],
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'TRUMP TRACKER',
+  },
+  icons: {
+    icon: '/trump-face.png',
+    apple: '/trump-face.png',
+  },
 };
 
 export default function RootLayout({
