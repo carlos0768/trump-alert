@@ -12,6 +12,8 @@ import {
   ToggleLeft,
   ToggleRight,
   LogIn,
+  Zap,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -102,11 +104,66 @@ export default function AlertsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
+      {/* Hero Section - トランプアラートを設定する */}
+      <div className="relative mb-8 overflow-hidden rounded-xl bg-gradient-to-r from-urgent via-red-600 to-orange-500 p-6 text-white shadow-2xl">
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute -left-4 -top-4 size-32 rounded-full bg-white blur-3xl" />
+          <div className="absolute -bottom-4 -right-4 size-32 rounded-full bg-yellow-300 blur-3xl" />
+        </div>
+        
+        {/* Content */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-center size-12 rounded-full bg-white/20 backdrop-blur-sm animate-pulse">
+              <AlertTriangle className="size-6 text-yellow-300" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                <span className="size-2 rounded-full bg-yellow-300 animate-ping" />
+                LIVE
+              </span>
+            </div>
+          </div>
+          
+          <h1 className="font-headline text-3xl font-black uppercase tracking-tight mb-2">
+            🚨 トランプアラートを設定する
+          </h1>
+          <p className="text-white/80 text-sm max-w-lg">
+            トランプに関する重要ニュースが発生したら、即座にあなたに通知。
+            <span className="font-bold text-yellow-300">見逃しは許されない。</span>
+          </p>
+          
+          <div className="flex items-center gap-4 mt-4">
+            <Button
+              onClick={() => setShowCreateForm(true)}
+              className="gap-2 bg-white text-urgent hover:bg-yellow-100 font-bold shadow-lg"
+              disabled={isLoading}
+            >
+              <Zap className="size-4" />
+              今すぐ設定
+            </Button>
+            <div className="text-xs text-white/60">
+              <span className="font-bold text-yellow-300">{alerts.length}</span> 件のアラート設定中
+            </div>
+          </div>
+        </div>
+        
+        {/* Trump silhouette decoration */}
+        <div className="absolute -right-8 -bottom-8 opacity-20">
+          <img 
+            src="/trump-face.png" 
+            alt="" 
+            className="size-40 rotate-12"
+          />
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">カスタムアラート</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="font-headline text-xl font-bold text-foreground uppercase tracking-wide">MY ALERTS</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             キーワードにマッチするニュースが届いたら通知を受け取る
           </p>
         </div>
