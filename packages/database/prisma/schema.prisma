@@ -27,6 +27,9 @@ model Article {
   impactLevel String   @default("C")
   glossary    Json?    // AI-generated glossary for unfamiliar terms/people
 
+  // Expert commentary - detailed analysis for general audience
+  commentary  Json?    // { expert, analysis, context, implications, verdict }
+
   // Embedding for semantic search (1536 dimensions for text-embedding-3-small)
   embedding   Unsupported("vector(1536)")?
 
