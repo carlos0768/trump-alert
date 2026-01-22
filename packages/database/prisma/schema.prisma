@@ -27,6 +27,9 @@ model Article {
   impactLevel String   @default("C")
   glossary    Json?    // AI-generated glossary for unfamiliar terms/people
 
+  // Embedding for semantic search (1536 dimensions for text-embedding-3-small)
+  embedding   Unsupported("vector(1536)")?
+
   // Metadata
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -138,8 +141,30 @@ model Alert {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  notificationLogs NotificationLog[]
+
   @@index([userId])
   @@index([isActive])
+}
+
+// Notification history to prevent duplicate notifications
+model NotificationLog {
+  id        String   @id @default(uuid())
+  alertId   String
+  articleId String
+  sentAt    DateTime @default(now())
+
+  // Track which channels were notified
+  sentPush    Boolean @default(false)
+  sentEmail   Boolean @default(false)
+  sentDiscord Boolean @default(false)
+
+  alert Alert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@unique([alertId, articleId]) // Prevent duplicate notifications for same alert+article
+  @@index([alertId])
+  @@index([articleId])
+  @@index([sentAt(sort: Desc)])
 }
 
 model StockPrice {
