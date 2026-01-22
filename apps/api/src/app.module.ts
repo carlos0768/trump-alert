@@ -12,6 +12,8 @@ import { AuthModule } from './auth/auth.module';
 import { StreamModule } from './stream/stream.module';
 import { StorylineModule } from './storyline/storyline.module';
 import { ExecutiveOrderModule } from './executive-order/executive-order.module';
+import { BookmarkModule } from './bookmark/bookmark.module';
+import { LikeModule } from './like/like.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { ExecutiveOrderModule } from './executive-order/executive-order.module';
     StreamModule,
     StorylineModule,
     ExecutiveOrderModule,
+    BookmarkModule,
+    LikeModule,
   ],
 })
 export class AppModule {}

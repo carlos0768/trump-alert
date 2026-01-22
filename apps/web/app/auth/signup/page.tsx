@@ -6,17 +6,21 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Loader2, ArrowLeft } from 'lucide-react';
 
 // Email validation regex
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { register, verifyToken, isLoading, error } = useAuth();
+  const { register, verifyCode, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<'email' | 'code'>('email');
   const [message, setMessage] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [devCode, setDevCode] = useState<string | null>(null);
 
   const validateEmail = (value: string): boolean => {
     if (!value) {
@@ -33,9 +37,10 @@ export default function SignUpPage() {
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
+    setDevCode(null);
 
     if (!validateEmail(email)) {
       return;
@@ -43,115 +48,229 @@ export default function SignUpPage() {
 
     try {
       const result = await register(email, name || undefined);
-      if (result.emailSent) {
-        // Email was sent - show confirmation message
-        setMessage(
-          '確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。'
-        );
-      } else if (result.verificationToken) {
-        // Email not configured - fallback to auto-verify (development mode)
-        await verifyToken(result.verificationToken);
-        setMessage('アカウントを作成しました。ホームに移動します...');
-        setTimeout(() => router.push('/'), 1500);
-      } else {
-        setMessage('アカウントを作成しました。ログインしてください。');
+
+      // 開発環境用：メールが送れない場合はコードを表示
+      if (result.code) {
+        setDevCode(result.code);
       }
+
+      setStep('code');
+      setMessage(
+        result.emailSent
+          ? '確認コードをメールに送信しました。'
+          : '確認コードを生成しました。'
+      );
     } catch {
       // Error is handled by useAuth
     }
   };
 
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage(null);
+
+    if (code.length !== 6) {
+      setValidationError('6桁のコードを入力してください');
+      return;
+    }
+
+    try {
+      await verifyCode(email, code);
+      setMessage('アカウントを作成しました。ホームに移動します...');
+      setTimeout(() => router.push('/'), 1500);
+    } catch {
+      setValidationError('コードが正しくないか、期限切れです');
+    }
+  };
+
+  const handleBackToEmail = () => {
+    setStep('email');
+    setCode('');
+    setDevCode(null);
+    setMessage(null);
+    setValidationError(null);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
-      <Card className="w-full max-w-md p-8 bg-slate-800 border-slate-700">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Trump Alert</h1>
-          <p className="text-slate-400">新規アカウント登録</p>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md border-border bg-surface-elevated p-8">
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-2xl font-bold text-foreground">
+            Trump Alert
+          </h1>
+          <p className="text-muted-foreground">
+            {step === 'email' ? '新規アカウント登録' : '認証コードを入力'}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-slate-300 mb-2"
+        {step === 'email' ? (
+          <form onSubmit={handleEmailSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-2 block text-sm font-medium text-foreground"
+              >
+                お名前（任意）
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="山田太郎"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-2 block text-sm font-medium text-foreground"
+              >
+                メールアドレス
+              </label>
+              <input
+                type="text"
+                id="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (validationError) validateEmail(e.target.value);
+                }}
+                onBlur={(e) => validateEmail(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="your@email.com"
+                autoComplete="email"
+              />
+            </div>
+
+            {validationError && (
+              <div className="rounded-lg border border-amber-700 bg-amber-900/50 p-3 text-sm text-amber-300">
+                {validationError}
+              </div>
+            )}
+
+            {error && (
+              <div className="rounded-lg border border-red-700 bg-red-900/50 p-3 text-sm text-red-300">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full rounded-lg bg-primary-600 py-3 font-medium text-white hover:bg-primary-700"
             >
-              お名前（任意）
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="山田太郎"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-slate-300 mb-2"
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  送信中...
+                </>
+              ) : (
+                '確認コードを送信'
+              )}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleCodeSubmit} className="space-y-6">
+            <button
+              type="button"
+              onClick={handleBackToEmail}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
-              メールアドレス
-            </label>
-            <input
-              type="text"
-              id="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (validationError) validateEmail(e.target.value);
-              }}
-              onBlur={(e) => validateEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="your@email.com"
-              autoComplete="email"
-            />
-          </div>
+              <ArrowLeft className="size-4" />
+              メールアドレスを変更
+            </button>
 
-          {validationError && (
-            <div className="p-3 bg-amber-900/50 border border-amber-700 rounded-lg text-amber-300 text-sm">
-              {validationError}
+            <div>
+              <label
+                htmlFor="code"
+                className="mb-2 block text-sm font-medium text-foreground"
+              >
+                認証コード
+              </label>
+              <p className="mb-3 text-sm text-muted-foreground">
+                {email} に送信されたコードを入力してください
+              </p>
+              <input
+                type="text"
+                id="code"
+                value={code}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setCode(value);
+                  setValidationError(null);
+                }}
+                className="w-full rounded-lg border border-border bg-background px-4 py-4 text-center font-mono text-2xl tracking-widest text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="000000"
+                maxLength={6}
+                autoFocus
+              />
             </div>
-          )}
 
-          {error && (
-            <div className="p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300 text-sm">
-              {error}
-            </div>
-          )}
+            {/* 開発環境用：コード表示 */}
+            {devCode && (
+              <div className="rounded-lg border border-blue-700 bg-blue-900/50 p-3 text-center">
+                <p className="mb-1 text-xs text-blue-300">
+                  開発環境：認証コード
+                </p>
+                <p className="font-mono text-2xl tracking-widest text-blue-200">
+                  {devCode}
+                </p>
+              </div>
+            )}
 
-          {message && (
-            <div className="p-3 bg-green-900/50 border border-green-700 rounded-lg text-green-300 text-sm">
-              {message}
-            </div>
-          )}
+            {validationError && (
+              <div className="rounded-lg border border-red-700 bg-red-900/50 p-3 text-sm text-red-300">
+                {validationError}
+              </div>
+            )}
 
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
-          >
-            {isLoading ? '登録中...' : 'アカウントを作成'}
-          </Button>
-        </form>
+            {error && (
+              <div className="rounded-lg border border-red-700 bg-red-900/50 p-3 text-sm text-red-300">
+                {error}
+              </div>
+            )}
+
+            {message && (
+              <div className="rounded-lg border border-green-700 bg-green-900/50 p-3 text-sm text-green-300">
+                {message}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isLoading || code.length !== 6}
+              className="w-full rounded-lg bg-primary-600 py-3 font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  確認中...
+                </>
+              ) : (
+                'アカウントを作成'
+              )}
+            </Button>
+          </form>
+        )}
 
         <div className="mt-6 text-center">
-          <p className="text-slate-400 text-sm">
+          <p className="text-sm text-muted-foreground">
             すでにアカウントをお持ちの方は{' '}
             <Link
               href="/auth/signin"
-              className="text-blue-400 hover:text-blue-300"
+              className="text-primary-400 hover:text-primary-300"
             >
               ログイン
             </Link>
           </p>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-700">
+        <div className="mt-8 border-t border-border pt-6">
           <Link
             href="/"
-            className="block text-center text-slate-400 hover:text-slate-300 text-sm"
+            className="block text-center text-sm text-muted-foreground hover:text-foreground"
           >
             ← ホームに戻る
           </Link>

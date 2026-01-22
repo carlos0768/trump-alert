@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Bebas_Neue, DM_Sans } from 'next/font/google';
+import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
@@ -53,20 +54,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={`${bebasNeue.variable} ${dmSans.variable}`}>
+    <html
+      lang="ja"
+      className={`${bebasNeue.variable} ${dmSans.variable}`}
+      suppressHydrationWarning
+    >
       <body className="min-h-dvh bg-background font-sans">
-        <QueryProvider>
-          <div className="flex h-dvh overflow-hidden">
-            {/* Left Sidebar */}
-            <Sidebar />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <div className="flex h-dvh overflow-hidden">
+              {/* Left Sidebar */}
+              <Sidebar />
 
-            {/* Main Content */}
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-y-auto">{children}</main>
+              {/* Main Content */}
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-y-auto">{children}</main>
+              </div>
             </div>
-          </div>
-        </QueryProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

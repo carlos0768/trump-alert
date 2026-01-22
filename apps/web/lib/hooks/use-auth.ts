@@ -119,6 +119,42 @@ export function useAuth() {
     [setLoading, setUser]
   );
 
+  const verifyCode = useCallback(
+    async (email: string, code: string) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(`${API_URL}/api/auth/verify-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || 'Verification failed');
+        }
+
+        // Set user data from response
+        if (data.user) {
+          setUser(data.user);
+        }
+
+        return data;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Verification failed';
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setUser]
+  );
+
   const login = useCallback(
     async (email: string) => {
       setLoading(true);
@@ -137,12 +173,7 @@ export function useAuth() {
           throw new Error(data.message || 'Login failed');
         }
 
-        // In development, we might get a token directly
-        if (data.loginToken) {
-          // Auto-verify for development
-          await verifyToken(data.loginToken);
-        }
-
+        // Return data - let frontend handle code entry
         return data;
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Login failed';
@@ -152,7 +183,7 @@ export function useAuth() {
         setLoading(false);
       }
     },
-    [setLoading, verifyToken]
+    [setLoading]
   );
 
   const logout = useCallback(() => {
@@ -240,6 +271,7 @@ export function useAuth() {
     register,
     login,
     verifyToken,
+    verifyCode,
     logout,
     updateUser,
     savePushSubscription,

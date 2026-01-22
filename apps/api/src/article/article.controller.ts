@@ -2,6 +2,7 @@ import { Controller, Get, Query, Param, Post } from '@nestjs/common';
 import { ArticleService, ArticleFilters } from './article.service';
 import { StatsService } from './stats.service';
 import { FactCheckService } from './fact-check.service';
+import { EmbeddingService } from './embedding.service';
 import { NewsCollectorService } from '../collector/news-collector.service';
 import { StockCollectorService } from '../collector/stock-collector.service';
 import { TruthSocialScraperService } from '../collector/truth-social-scraper.service';
@@ -13,6 +14,7 @@ export class ArticleController {
     private readonly articleService: ArticleService,
     private readonly statsService: StatsService,
     private readonly factCheckService: FactCheckService,
+    private readonly embeddingService: EmbeddingService,
     private readonly newsCollector: NewsCollectorService,
     private readonly stockCollector: StockCollectorService,
     private readonly truthSocialScraper: TruthSocialScraperService,
@@ -199,6 +201,42 @@ export class ArticleController {
       processed: results.filter((r) => r.success).length,
       failed: results.filter((r) => !r.success).length,
       results,
+    };
+  }
+
+  // Backfill embeddings for existing articles
+  @Post('backfill-embeddings')
+  async backfillEmbeddings(@Query('batchSize') batchSize?: string) {
+    const articlesWithoutEmbedding =
+      await this.embeddingService.getArticlesWithoutEmbedding();
+
+    if (articlesWithoutEmbedding === 0) {
+      return {
+        message: 'All articles already have embeddings',
+        processed: 0,
+        failed: 0,
+      };
+    }
+
+    const result = await this.embeddingService.backfillEmbeddings(
+      batchSize ? parseInt(batchSize) : 10
+    );
+
+    return {
+      message: `Backfill completed`,
+      totalWithoutEmbedding: articlesWithoutEmbedding,
+      ...result,
+    };
+  }
+
+  // Get embedding statistics
+  @Get('stats/embeddings')
+  async getEmbeddingStats() {
+    const withoutEmbedding =
+      await this.embeddingService.getArticlesWithoutEmbedding();
+
+    return {
+      articlesWithoutEmbedding: withoutEmbedding,
     };
   }
 }

@@ -123,6 +123,71 @@ const TAGS_PROMPT = `
 JSON形式: { "tags": ["Tariff", "China", "Economy"] }
 `;
 
+const EXPERT_COMMENTARY_PROMPT = `
+あなたは米国政治・国際関係の専門家として、以下のニュースを一般の日本人視聴者向けに解説します。
+池上彰氏のようなわかりやすさと、専門家としての深い洞察を兼ね備えた解説を心がけてください。
+
+## 現在のトランプ情勢コンテキスト（2025年1月時点）
+
+### 政権状況
+- 2025年1月20日に第47代大統領として就任（2期目）
+- 副大統領はJDヴァンス（オハイオ州選出、テック業界出身の若手保守派）
+- 「アメリカ・ファースト2.0」を掲げ、より強硬な政策を展開
+
+### 主要政策の現状
+1. **関税政策**: 中国に60%、その他諸国に10-20%の関税を段階的に導入中
+2. **移民政策**: 「史上最大の強制送還作戦」を開始、国境壁建設を再開
+3. **ウクライナ問題**: 就任後「24時間で終わらせる」と公約、ロシアとの交渉を模索中
+4. **パリ協定**: 再び離脱を表明、化石燃料産業を支援
+5. **連邦政府改革**: イーロン・マスク率いる「政府効率化省（DOGE）」が省庁削減を推進
+
+### 進行中の法的問題
+- ジョージア州選挙介入事件: 大統領免責により一時停止
+- 機密文書事件（フロリダ）: 特別検察官により却下
+- 1月6日議事堂襲撃事件: 大統領自己恩赦の可能性
+
+### 市場・経済状況
+- DJT（トランプ・メディア株）: 政策発表で乱高下
+- 関税発表のたびに株式市場が反応
+- ドル高・円安傾向が継続
+
+## 記事情報
+タイトル: {title}
+ソース: {source}
+本文: {content}
+
+## 出力形式
+以下のJSON形式で、専門家解説を生成してください：
+
+{
+  "expert": {
+    "name": "解説者の架空の名前（日本人名）",
+    "title": "肩書き（例：米国政治アナリスト、元外交官、国際政治学者など）",
+    "affiliation": "所属（例：○○大学、○○研究所など）"
+  },
+  "analysis": "このニュースの本質を2-3文で解説。「これは〇〇ということです」のような平易な言葉で",
+  "context": "時系列での文脈説明。「これまでの流れを整理すると...」「そもそもなぜこの問題が...」という形式で100-150文字",
+  "implications": {
+    "shortTerm": "短期的な影響（1-3ヶ月）を1-2文で",
+    "longTerm": "長期的・構造的な影響を1-2文で",
+    "forJapan": "日本への影響や日本人が注目すべきポイントを1-2文で"
+  },
+  "verdict": {
+    "reliability": "high/medium/low - このニュースの信頼度",
+    "importance": "このニュースを10段階で評価（1-10）",
+    "watchPoints": ["今後注目すべきポイント1", "注目ポイント2"]
+  },
+  "oneLineExplain": "「要するにこういうこと」を中学生にもわかる1文で（30-50文字）"
+}
+
+## スタイルガイド
+- 「〜なんですね」「〜というわけです」など、テレビ解説のような親しみやすい語尾
+- 専門用語は使う場合は必ず（）内で簡単な説明を添える
+- 「ポイントは3つあります」のような構造化された説明
+- 感情的な表現は避け、客観的だが興味を引く表現
+- 日本人視聴者が「なるほど」と思える日本との関連付け
+`;
+
 const GLOSSARY_PROMPT = `
 あなたは米国政治の専門家です。以下のニュース記事を読み、**一般的な日本人読者が知らない可能性が高い項目**を特定し、簡潔に解説してください。
 
@@ -179,6 +244,27 @@ export interface GlossaryItem {
   description: string;
 }
 
+export interface ExpertCommentary {
+  expert: {
+    name: string;
+    title: string;
+    affiliation: string;
+  };
+  analysis: string;
+  context: string;
+  implications: {
+    shortTerm: string;
+    longTerm: string;
+    forJapan: string;
+  };
+  verdict: {
+    reliability: 'high' | 'medium' | 'low';
+    importance: number;
+    watchPoints: string[];
+  };
+  oneLineExplain: string;
+}
+
 export interface AnalysisResult {
   id: string;
   title: string;
@@ -191,6 +277,7 @@ export interface AnalysisResult {
   bias: 'Left' | 'Center' | 'Right';
   impactLevel: 'S' | 'A' | 'B' | 'C';
   glossary: GlossaryItem[];
+  commentary: ExpertCommentary | null;
 }
 
 // GPT-4o-mini pricing (per 1M tokens)
@@ -271,15 +358,28 @@ export class AIAnalyzerService {
       );
 
       // Then run all analyses in parallel
-      const [summary, sentiment, bias, impactLevel, tags, glossary] =
-        await Promise.all([
-          this.getSummary(article.title, article.content, articleId),
-          this.getSentiment(article.content, articleId),
-          this.getBias(article.content, articleId),
-          this.getImpact(article.title, articleId),
-          this.getTags(article.title, article.content, articleId),
-          this.getGlossary(article.title, article.content, articleId),
-        ]);
+      const [
+        summary,
+        sentiment,
+        bias,
+        impactLevel,
+        tags,
+        glossary,
+        commentary,
+      ] = await Promise.all([
+        this.getSummary(article.title, article.content, articleId),
+        this.getSentiment(article.content, articleId),
+        this.getBias(article.content, articleId),
+        this.getImpact(article.title, articleId),
+        this.getTags(article.title, article.content, articleId),
+        this.getGlossary(article.title, article.content, articleId),
+        this.getExpertCommentary(
+          article.title,
+          article.content,
+          article.source,
+          articleId
+        ),
+      ]);
 
       // Save tags to database
       await this.saveTags(articleId, tags);
@@ -296,6 +396,7 @@ export class AIAnalyzerService {
         bias,
         impactLevel,
         glossary,
+        commentary,
       };
 
       // Update the article with analysis results
@@ -312,8 +413,18 @@ export class AIAnalyzerService {
             result.glossary.length > 0
               ? (result.glossary as unknown as Prisma.InputJsonValue)
               : undefined,
+          commentary: result.commentary
+            ? (result.commentary as unknown as Prisma.InputJsonValue)
+            : undefined,
         },
       });
+
+      // Generate and save embedding for similarity search
+      await this.generateAndSaveEmbedding(
+        articleId,
+        article.title,
+        article.content
+      );
 
       this.logger.log(`Analysis complete for article ${articleId}`);
       return result;
@@ -608,6 +719,91 @@ export class AIAnalyzerService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  private async getExpertCommentary(
+    title: string,
+    content: string,
+    source: string,
+    articleId?: string
+  ): Promise<ExpertCommentary | null> {
+    const prompt = fillPrompt(EXPERT_COMMENTARY_PROMPT, {
+      title,
+      content: content.substring(0, 3000),
+      source,
+    });
+
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          max_tokens: 1500,
+        });
+
+        const usage = response.usage;
+        if (usage) {
+          await this.trackUsage(
+            'commentary',
+            'gpt-4o-mini',
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            articleId
+          );
+        }
+
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+
+        // Validate the structure
+        if (
+          result.expert?.name &&
+          result.expert?.title &&
+          result.analysis &&
+          result.context &&
+          result.implications &&
+          result.verdict &&
+          result.oneLineExplain
+        ) {
+          return {
+            expert: {
+              name: result.expert.name,
+              title: result.expert.title,
+              affiliation: result.expert.affiliation || '',
+            },
+            analysis: result.analysis,
+            context: result.context,
+            implications: {
+              shortTerm: result.implications.shortTerm || '',
+              longTerm: result.implications.longTerm || '',
+              forJapan: result.implications.forJapan || '',
+            },
+            verdict: {
+              reliability: ['high', 'medium', 'low'].includes(
+                result.verdict.reliability
+              )
+                ? result.verdict.reliability
+                : 'medium',
+              importance: Math.min(
+                10,
+                Math.max(1, parseInt(result.verdict.importance) || 5)
+              ),
+              watchPoints: Array.isArray(result.verdict.watchPoints)
+                ? result.verdict.watchPoints.slice(0, 3)
+                : [],
+            },
+            oneLineExplain: result.oneLineExplain,
+          };
+        }
+      } catch (error) {
+        this.logger.warn(
+          `Expert commentary attempt ${attempt + 1} failed: ${error}`
+        );
+        await this.sleep(1000 * Math.pow(2, attempt));
+      }
+    }
+
+    return null; // Return null if commentary generation fails
+  }
+
   private async getTags(
     title: string,
     content: string,
@@ -724,6 +920,54 @@ export class AIAnalyzerService {
       this.logger.error(
         `Failed to save tags for article ${articleId}: ${error}`
       );
+    }
+  }
+
+  /**
+   * Generate and save embedding for an article (for similarity search)
+   */
+  private async generateAndSaveEmbedding(
+    articleId: string,
+    title: string,
+    content: string
+  ): Promise<void> {
+    try {
+      // Combine title and content for embedding
+      const text = `${title}\n\n${content}`.slice(0, 8000);
+
+      const response = await this.openai.embeddings.create({
+        model: 'text-embedding-3-small',
+        input: text,
+      });
+
+      const embedding = response.data[0].embedding;
+      const embeddingStr = `[${embedding.join(',')}]`;
+
+      // Save embedding using raw SQL (pgvector)
+      await this.prisma.$executeRawUnsafe(
+        `UPDATE "Article" SET embedding = $1::vector WHERE id = $2`,
+        embeddingStr,
+        articleId
+      );
+
+      // Track usage
+      const usage = response.usage;
+      if (usage) {
+        await this.trackUsage(
+          'embedding',
+          'text-embedding-3-small',
+          usage.prompt_tokens,
+          0, // No completion tokens for embeddings
+          articleId
+        );
+      }
+
+      this.logger.log(`Embedding saved for article ${articleId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate embedding for ${articleId}: ${error}`
+      );
+      // Don't throw - embedding failure shouldn't block the analysis
     }
   }
 }

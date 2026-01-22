@@ -17,6 +17,12 @@ interface AuthEmailPayload {
   type: 'verification' | 'login';
 }
 
+interface VerificationCodePayload {
+  to: string;
+  code: string;
+  isLogin?: boolean;
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -24,6 +30,114 @@ export class EmailService {
   private readonly fromEmail =
     process.env.EMAIL_FROM || 'Trump Alert <noreply@trumpalert.app>';
   private readonly appUrl = process.env.APP_URL || 'http://localhost:3000';
+
+  /**
+   * Send verification code email
+   */
+  async sendVerificationCode(
+    payload: VerificationCodePayload
+  ): Promise<boolean> {
+    if (!this.resendApiKey) {
+      this.logger.warn(
+        'RESEND_API_KEY not configured, skipping verification email'
+      );
+      return false;
+    }
+
+    const subject = payload.isLogin
+      ? 'Trump Alert - ログインコード'
+      : 'Trump Alert - 認証コード';
+
+    const html = this.generateVerificationCodeHtml({
+      code: payload.code,
+      isLogin: payload.isLogin || false,
+    });
+
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: this.fromEmail,
+          to: payload.to,
+          subject,
+          html,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Resend API error: ${error}`);
+      }
+
+      this.logger.log(`Verification code sent to ${payload.to}`);
+      return true;
+    } catch (error) {
+      this.logger.error('Failed to send verification code email:', error);
+      return false;
+    }
+  }
+
+  private generateVerificationCodeHtml(params: {
+    code: string;
+    isLogin: boolean;
+  }): string {
+    const title = params.isLogin ? 'ログインコード' : '認証コード';
+    const message = params.isLogin
+      ? 'ログインするには、以下のコードを入力してください。'
+      : 'メールアドレスを確認するには、以下のコードを入力してください。';
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+  <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); color: white; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 24px;">🔔 Trump Alert</h1>
+  </div>
+
+  <div style="background: white; padding: 32px; border: 1px solid #e5e7eb; border-top: none;">
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; color: #1e3a5f;">${title}</h2>
+
+    <p style="margin: 0 0 24px 0; color: #4b5563;">
+      ${message}
+    </p>
+
+    <div style="text-align: center; margin: 32px 0;">
+      <div style="display: inline-block; background: #f3f4f6; padding: 16px 32px; border-radius: 8px; border: 2px dashed #d1d5db;">
+        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1e3a5f; font-family: monospace;">
+          ${params.code}
+        </span>
+      </div>
+    </div>
+
+    <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280;">
+      このコードは10分間有効です。
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+
+    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+      このメールに心当たりがない場合は、無視してください。
+    </p>
+  </div>
+
+  <div style="background: #f3f4f6; padding: 16px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #6b7280;">
+    <p style="margin: 0;">
+      © 2025 Trump Alert. All rights reserved.
+    </p>
+  </div>
+</body>
+</html>
+    `;
+  }
 
   /**
    * Send authentication email (verification or login)

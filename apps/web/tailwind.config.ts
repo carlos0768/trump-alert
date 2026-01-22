@@ -78,6 +78,7 @@ const config: Config = {
         // Surface colors for dark mode
         surface: {
           DEFAULT: '#0F172A',
+          muted: 'hsl(var(--muted))',
           elevated: '#1E293B',
           overlay: '#334155',
         },

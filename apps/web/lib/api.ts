@@ -306,6 +306,7 @@ export interface ComparisonPair {
   center: ComparisonArticle | null;
   right: ComparisonArticle | null;
   sentimentGap: number;
+  confidence?: 'high' | 'medium'; // 比較の信頼度
 }
 
 // Fetch fact check comparisons

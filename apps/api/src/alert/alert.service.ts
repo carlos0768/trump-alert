@@ -86,6 +86,50 @@ export class AlertService {
     C: 1,
   };
 
+  // Check if notification was already sent for this alert+article combination
+  private async hasNotificationBeenSent(
+    alertId: string,
+    articleId: string
+  ): Promise<boolean> {
+    const existing = await this.prisma.notificationLog.findUnique({
+      where: {
+        alertId_articleId: {
+          alertId,
+          articleId,
+        },
+      },
+    });
+    return !!existing;
+  }
+
+  // Log that a notification has been sent
+  async logNotificationSent(
+    alertId: string,
+    articleId: string,
+    channels: { push?: boolean; email?: boolean; discord?: boolean }
+  ): Promise<void> {
+    await this.prisma.notificationLog.upsert({
+      where: {
+        alertId_articleId: {
+          alertId,
+          articleId,
+        },
+      },
+      create: {
+        alertId,
+        articleId,
+        sentPush: channels.push ?? false,
+        sentEmail: channels.email ?? false,
+        sentDiscord: channels.discord ?? false,
+      },
+      update: {
+        sentPush: channels.push ?? false,
+        sentEmail: channels.email ?? false,
+        sentDiscord: channels.discord ?? false,
+      },
+    });
+  }
+
   // 新しい記事がアラート条件に合致するかチェックして通知をキューに追加
   async checkAndTriggerAlerts(article: {
     id: string;
@@ -128,7 +172,20 @@ export class AlertService {
         continue;
       }
 
-      // 通知ジョブをキューに追加
+      // データベースで重複チェック（BullMQのjobIdだけでは不十分）
+      const alreadySent = await this.hasNotificationBeenSent(
+        alert.id,
+        article.id
+      );
+      if (alreadySent) {
+        this.logger.debug(
+          `Notification already sent for alert ${alert.id} + article ${article.id}, skipping`
+        );
+        continue;
+      }
+
+      // 通知ジョブをキューに追加（jobIdで重複防止）
+      const jobId = `notification-${alert.id}-${article.id}`;
       await this.notificationQueue.add(
         'send-notification',
         {
@@ -146,6 +203,7 @@ export class AlertService {
           user: alert.user,
         },
         {
+          jobId, // 同じalertId+articleIdの組み合わせは重複追加されない
           attempts: 3,
           backoff: {
             type: 'exponential',

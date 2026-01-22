@@ -19,34 +19,32 @@ export class AuthController {
     private readonly emailService: EmailService
   ) {}
 
-  // ユーザー登録（メール認証トークン発行）
+  // ユーザー登録（メール認証コード発行）
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: CreateUserDto) {
     const user = await this.authService.createUser(dto);
-    const token = await this.authService.createVerificationToken(dto.email);
+    const code = await this.authService.createVerificationCode(dto.email);
 
-    // Send verification email
-    const emailSent = await this.emailService.sendAuthEmail({
+    // Send verification email with code
+    const emailSent = await this.emailService.sendVerificationCode({
       to: dto.email,
-      token,
-      type: 'verification',
+      code,
     });
 
     return {
       message: emailSent
-        ? '確認メールを送信しました。メールを確認してください。'
-        : 'ユーザーを作成しました。',
+        ? '確認コードをメールに送信しました。'
+        : '確認コードを生成しました。',
       userId: user.id,
+      email: dto.email,
       emailSent,
       // 開発環境用：メールが送れない場合のフォールバック
-      ...(!emailSent && {
-        verificationToken: token,
-      }),
+      ...(!emailSent && { code }),
     };
   }
 
-  // メール認証確認
+  // メール認証確認（トークン方式 - メールリンク用）
   @Post('verify')
   @HttpCode(HttpStatus.OK)
   async verify(@Body('token') token: string) {
@@ -72,7 +70,34 @@ export class AuthController {
     };
   }
 
-  // ログイン（メールベース）
+  // メール認証確認（コード方式）
+  @Post('verify-code')
+  @HttpCode(HttpStatus.OK)
+  async verifyCode(@Body('email') email: string, @Body('code') code: string) {
+    if (!email || !code) {
+      throw new BadRequestException('Email and code are required');
+    }
+
+    const isValid = await this.authService.verifyCode(email, code);
+
+    if (!isValid) {
+      throw new BadRequestException('Invalid or expired code');
+    }
+
+    const user = await this.authService.findByEmail(email);
+
+    if (user) {
+      await this.authService.verifyEmail(user.id);
+    }
+
+    return {
+      message: 'Email verified successfully',
+      email,
+      user,
+    };
+  }
+
+  // ログイン（メールベース - コード方式）
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body('email') email: string) {
@@ -86,23 +111,24 @@ export class AuthController {
       throw new BadRequestException('User not found');
     }
 
-    // マジックリンク用のトークン生成
-    const token = await this.authService.createVerificationToken(email);
+    // 6桁コードを生成
+    const code = await this.authService.createVerificationCode(email);
 
-    // Send login email
-    const emailSent = await this.emailService.sendAuthEmail({
+    // Send login email with code
+    const emailSent = await this.emailService.sendVerificationCode({
       to: email,
-      token,
-      type: 'login',
+      code,
+      isLogin: true,
     });
 
     return {
       message: emailSent
-        ? 'ログインリンクをメールに送信しました。'
-        : 'ログインリンクを生成しました。',
+        ? 'ログインコードをメールに送信しました。'
+        : 'ログインコードを生成しました。',
+      email,
       emailSent,
       // 開発環境用：メールが送れない場合のフォールバック
-      ...(!emailSent && { loginToken: token }),
+      ...(!emailSent && { code }),
     };
   }
 

@@ -222,14 +222,24 @@ export default function FactCheckPage() {
               {/* Topic Header */}
               <div className="border-b border-border bg-surface-muted px-6 py-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="font-headline font-semibold uppercase tracking-wide text-foreground">
-                      {comparison.topicJa || comparison.topic}
-                    </h2>
-                    {comparison.topicJa && (
-                      <p className="text-xs text-muted-foreground">
-                        {comparison.topic}
-                      </p>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h2 className="font-headline font-semibold uppercase tracking-wide text-foreground">
+                        {comparison.topicJa || comparison.topic}
+                      </h2>
+                      {comparison.topicJa && (
+                        <p className="text-xs text-muted-foreground">
+                          {comparison.topic}
+                        </p>
+                      )}
+                    </div>
+                    {comparison.confidence === 'high' && (
+                      <Badge
+                        variant="default"
+                        className="bg-green-600 text-white"
+                      >
+                        同一出来事
+                      </Badge>
                     )}
                   </div>
                   <Badge variant="secondary">

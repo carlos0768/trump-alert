@@ -37,6 +37,56 @@ export class AuthService {
     return token;
   }
 
+  // 6桁認証コードの生成
+  async createVerificationCode(email: string): Promise<string> {
+    // 6桁のランダムコード
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 10 * 60 * 1000); // 10分有効
+
+    // 既存のコードを削除
+    await this.prisma.verificationToken.deleteMany({
+      where: { identifier: email },
+    });
+
+    await this.prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token: code,
+        expires,
+      },
+    });
+
+    return code;
+  }
+
+  // 6桁認証コードの検証
+  async verifyCode(email: string, code: string): Promise<boolean> {
+    const verification = await this.prisma.verificationToken.findFirst({
+      where: {
+        identifier: email,
+        token: code,
+      },
+    });
+
+    if (!verification) {
+      return false;
+    }
+
+    if (verification.expires < new Date()) {
+      await this.prisma.verificationToken.delete({
+        where: { token: verification.token },
+      });
+      return false;
+    }
+
+    // コードを削除
+    await this.prisma.verificationToken.delete({
+      where: { token: verification.token },
+    });
+
+    return true;
+  }
+
   // メール認証トークンの検証
   async verifyToken(token: string): Promise<string | null> {
     const verification = await this.prisma.verificationToken.findUnique({
