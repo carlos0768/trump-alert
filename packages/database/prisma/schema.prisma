@@ -37,6 +37,7 @@ model Article {
   // Relations
   tags       ArticleTag[]
   storylines StorylineArticle[]
+  bookmarks  Bookmark[]
 
   @@index([publishedAt(sort: Desc)])
   @@index([source, publishedAt(sort: Desc)])
@@ -119,11 +120,28 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  alerts   Alert[]
-  accounts Account[]
-  sessions Session[]
+  alerts    Alert[]
+  accounts  Account[]
+  sessions  Session[]
+  bookmarks Bookmark[]
 
   @@index([email])
+}
+
+// User bookmarks for articles
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId]) // Each user can bookmark an article only once
+  @@index([userId])
+  @@index([articleId])
+  @@index([createdAt(sort: Desc)])
 }
 
 model Alert {
