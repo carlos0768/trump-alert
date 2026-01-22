@@ -38,6 +38,10 @@ model Article {
   tags       ArticleTag[]
   storylines StorylineArticle[]
   bookmarks  Bookmark[]
+  likes      Like[]
+
+  // Aggregated like count for performance
+  likeCount  Int      @default(0)
 
   @@index([publishedAt(sort: Desc)])
   @@index([source, publishedAt(sort: Desc)])
@@ -124,6 +128,7 @@ model User {
   accounts  Account[]
   sessions  Session[]
   bookmarks Bookmark[]
+  likes     Like[]
 
   @@index([email])
 }
@@ -142,6 +147,21 @@ model Bookmark {
   @@index([userId])
   @@index([articleId])
   @@index([createdAt(sort: Desc)])
+}
+
+// User likes for articles (unit: トランプ)
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId]) // Each user can like an article only once
+  @@index([userId])
+  @@index([articleId])
 }
 
 model Alert {
