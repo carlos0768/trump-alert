@@ -391,7 +391,7 @@ function ActionButton({
   );
 }
 
-// Like button with トランプ unit
+// Like button
 interface LikeButtonProps {
   liked: boolean;
   count: number;
@@ -410,9 +410,8 @@ function LikeButton({ liked, count, onClick }: LikeButtonProps) {
     >
       <Heart className={cn('size-4', liked && 'fill-current')} />
       {count > 0 && (
-        <span className="text-xs">
-          <span className="font-mono tabular-nums">{formatNumber(count)}</span>
-          <span className="ml-0.5 text-[10px]">トランプ</span>
+        <span className="font-mono text-xs tabular-nums">
+          {formatNumber(count)}
         </span>
       )}
     </button>
