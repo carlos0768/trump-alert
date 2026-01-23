@@ -14,16 +14,9 @@ import {
   ExternalLink,
   Clock,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   Check,
   Link as LinkIcon,
   Twitter,
-  MessageSquareQuote,
-  TrendingUp,
-  Target,
-  ShieldCheck,
-  Eye,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import {
@@ -87,8 +80,6 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showCommentary, setShowCommentary] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const { user } = useAuth();
@@ -100,11 +91,8 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
   const iconSrc = article.sourceIcon || getSourceIcon(article.source);
   const isUrgent = article.impactLevel === 'S';
   const isBreaking = isUrgent && isWithinHours(article.publishedAt, 2);
-  // サマリーがある場合でも全文を表示できるようにする（閾値を50文字に下げる）
-  const hasFullContent = displayContent && displayContent.length > 50;
   const bookmarked = user ? isBookmarked(article.id) : false;
   const liked = user ? isLiked(article.id) : false;
-  const commentary = article.commentary;
 
   // Initialize like count from article data
   useEffect(() => {
@@ -281,202 +269,6 @@ export function ArticleCard({ article, showImage = true }: ArticleCardProps) {
               {displayContent}
             </p>
           ) : null}
-
-          {/* Full Content (Expandable) */}
-          {hasFullContent && (
-            <div className="mt-3">
-              {isExpanded && (
-                <div className="mb-3 rounded-lg border border-border bg-surface-elevated p-4">
-                  <p className="text-pretty text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                    {displayContent}
-                  </p>
-                </div>
-              )}
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className={cn(
-                  'flex items-center gap-1 text-sm font-medium transition-colors',
-                  'text-primary-400 hover:text-primary-300'
-                )}
-              >
-                {isExpanded ? (
-                  <>
-                    <ChevronUp className="size-4" />
-                    全文を閉じる
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="size-4" />
-                    全文を表示
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Expert Commentary */}
-          {commentary && (
-            <div className="mt-3">
-              <button
-                onClick={() => setShowCommentary(!showCommentary)}
-                className={cn(
-                  'flex items-center gap-2 text-sm font-medium transition-colors',
-                  'text-amber-500 hover:text-amber-400'
-                )}
-              >
-                <MessageSquareQuote className="size-4" />
-                専門家の解説を見る
-                {showCommentary ? (
-                  <ChevronUp className="size-3" />
-                ) : (
-                  <ChevronDown className="size-3" />
-                )}
-              </button>
-
-              {showCommentary && (
-                <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-4">
-                  {/* Expert Info */}
-                  <div className="flex items-center gap-3 pb-3 border-b border-amber-500/20">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/20">
-                      <Eye className="size-5 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {commentary.expert.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {commentary.expert.title} /{' '}
-                        {commentary.expert.affiliation}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* One-line Explanation */}
-                  <div className="rounded-lg bg-amber-500/10 p-3">
-                    <p className="text-xs font-medium text-amber-500 mb-1">
-                      要するに...
-                    </p>
-                    <p className="text-sm font-medium text-foreground">
-                      {commentary.oneLineExplain}
-                    </p>
-                  </div>
-
-                  {/* Analysis */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="size-4 text-amber-500" />
-                      <p className="text-xs font-medium text-amber-500">分析</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {commentary.analysis}
-                    </p>
-                  </div>
-
-                  {/* Context */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Target className="size-4 text-amber-500" />
-                      <p className="text-xs font-medium text-amber-500">
-                        背景・文脈
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {commentary.context}
-                    </p>
-                  </div>
-
-                  {/* Implications */}
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-amber-500">
-                      今後の影響
-                    </p>
-                    <div className="grid gap-2 text-sm">
-                      <div className="rounded-lg bg-surface-elevated p-2">
-                        <span className="text-xs text-muted-foreground">
-                          短期的:
-                        </span>
-                        <p className="text-foreground mt-0.5">
-                          {commentary.implications.shortTerm}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-surface-elevated p-2">
-                        <span className="text-xs text-muted-foreground">
-                          長期的:
-                        </span>
-                        <p className="text-foreground mt-0.5">
-                          {commentary.implications.longTerm}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-2">
-                        <span className="text-xs text-blue-400">
-                          日本への影響:
-                        </span>
-                        <p className="text-foreground mt-0.5">
-                          {commentary.implications.forJapan}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Verdict */}
-                  <div className="pt-3 border-t border-amber-500/20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ShieldCheck className="size-4 text-amber-500" />
-                      <p className="text-xs font-medium text-amber-500">
-                        総合評価
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 rounded text-xs font-medium',
-                          commentary.verdict.reliability === 'high' &&
-                            'bg-green-500/20 text-green-400',
-                          commentary.verdict.reliability === 'medium' &&
-                            'bg-yellow-500/20 text-yellow-400',
-                          commentary.verdict.reliability === 'low' &&
-                            'bg-red-500/20 text-red-400'
-                        )}
-                      >
-                        信頼性:{' '}
-                        {commentary.verdict.reliability === 'high'
-                          ? '高'
-                          : commentary.verdict.reliability === 'medium'
-                            ? '中'
-                            : '低'}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        重要度:{' '}
-                        <span className="font-mono text-foreground">
-                          {commentary.verdict.importance}/10
-                        </span>
-                      </span>
-                    </div>
-
-                    {/* Watch Points */}
-                    {commentary.verdict.watchPoints.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          注目ポイント:
-                        </p>
-                        <ul className="space-y-1">
-                          {commentary.verdict.watchPoints.map((point, idx) => (
-                            <li
-                              key={idx}
-                              className="flex items-start gap-2 text-xs text-muted-foreground"
-                            >
-                              <span className="mt-1 size-1 flex-shrink-0 rounded-full bg-amber-500" />
-                              {point}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* Image */}
           {showImage && article.imageUrl && (
