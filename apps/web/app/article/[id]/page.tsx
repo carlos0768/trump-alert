@@ -35,28 +35,6 @@ import { useArticle, useRelatedArticles } from '@/lib/hooks';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import type { GlossaryItem } from '@/lib/api';
 
-// Expert Commentary type
-interface ExpertCommentary {
-  expert: {
-    name: string;
-    title: string;
-    affiliation: string;
-  };
-  analysis: string;
-  context: string;
-  implications: {
-    shortTerm: string;
-    longTerm: string;
-    forJapan: string;
-  };
-  verdict: {
-    reliability: 'high' | 'medium' | 'low';
-    importance: number;
-    watchPoints: string[];
-  };
-  oneLineExplain: string;
-}
-
 const glossaryTypeIcons: Record<GlossaryItem['type'], typeof User> = {
   person: User,
   law: Scale,
@@ -84,8 +62,7 @@ export default function ArticlePage({ params }: ArticlePageProps) {
   const [showFullContent, setShowFullContent] = useState(false);
   const [showCommentary, setShowCommentary] = useState(false);
 
-  // Cast commentary to typed interface
-  const commentary = article?.commentary as ExpertCommentary | null;
+  const commentary = article?.commentary;
 
   if (isLoading) {
     return (

@@ -7,6 +7,27 @@ export interface GlossaryItem {
   description: string;
 }
 
+export interface ExpertCommentary {
+  expert: {
+    name: string;
+    title: string;
+    affiliation: string;
+  };
+  analysis: string;
+  context: string;
+  implications: {
+    shortTerm: string;
+    longTerm: string;
+    forJapan: string;
+  };
+  verdict: {
+    reliability: 'high' | 'medium' | 'low';
+    importance: number;
+    watchPoints: string[];
+  };
+  oneLineExplain: string;
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -23,6 +44,8 @@ export interface Article {
   impactLevel: 'S' | 'A' | 'B' | 'C';
   tags: { id: string; name: string }[];
   glossary?: GlossaryItem[];
+  commentary?: ExpertCommentary | null;
+  likeCount?: number;
 }
 
 export interface ArticleFilters {
