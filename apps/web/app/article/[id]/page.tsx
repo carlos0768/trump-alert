@@ -230,13 +230,6 @@ export default function ArticlePage({ params }: ArticlePageProps) {
         </Card>
       )}
 
-      {/* Content Preview */}
-      <div className="mt-6">
-        <p className="text-pretty leading-relaxed text-foreground/80 whitespace-pre-wrap">
-          {displayContent}
-        </p>
-      </div>
-
       {/* Full Content (Expandable) - 翻訳済み全文 */}
       {article.contentJa && (
         <div className="mt-6">
