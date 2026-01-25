@@ -127,8 +127,8 @@ export function Header() {
         </div>
       </div>
 
-      {/* Center - Search */}
-      <div className="flex flex-1 items-center justify-center px-4 lg:justify-center">
+      {/* Center - Search (Desktop only) */}
+      <div className="hidden flex-1 items-center justify-center px-4 lg:flex">
         <div className="relative w-full max-w-md">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -136,7 +136,7 @@ export function Header() {
             placeholder="Search breaking news, topics..."
             className="w-full rounded-lg border border-border bg-surface-elevated py-2 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground transition-all focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
-          <kbd className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground lg:block">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground">
             ⌘K
           </kbd>
         </div>
