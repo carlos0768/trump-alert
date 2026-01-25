@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { BottomNav } from '@/components/layout/bottom-nav';
 import { QueryProvider } from '@/components/providers';
 
 const bebasNeue = Bebas_Neue({
@@ -74,8 +75,13 @@ export default function RootLayout({
               {/* Main Content */}
               <div className="flex flex-1 flex-col overflow-hidden">
                 <Header />
-                <main className="flex-1 overflow-y-auto">{children}</main>
+                <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+                  {children}
+                </main>
               </div>
+
+              {/* Bottom Navigation (Mobile) */}
+              <BottomNav />
             </div>
           </QueryProvider>
         </ThemeProvider>

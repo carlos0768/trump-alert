@@ -2,10 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Bell, AlertTriangle, ChevronDown, Menu } from 'lucide-react';
+import {
+  Search,
+  Bell,
+  AlertTriangle,
+  ChevronDown,
+  Menu,
+  RefreshCw,
+} from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
+import { LiveBadge } from '@/components/ui/badge';
+import { FilterBar } from '@/components/dashboard';
 import { cn } from '@/lib/utils';
-import { useSidebarStore, useUrgentStats } from '@/lib/hooks';
+import { useSidebarStore, useUrgentStats, useHeaderStore } from '@/lib/hooks';
 import type { UrgentStats } from '@/lib/api';
 
 export function Header() {
@@ -14,6 +23,22 @@ export function Header() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const openSidebar = useSidebarStore((state) => state.open);
   const { data: urgentStats } = useUrgentStats();
+  const { isRefetching, triggerRefetch, setFilters } = useHeaderStore();
+
+  const handleFilterChange = (newFilters: {
+    impactLevels: string[];
+    biases: string[];
+    timeRange: string;
+  }) => {
+    setFilters({
+      impactLevels:
+        newFilters.impactLevels.length > 0
+          ? newFilters.impactLevels
+          : undefined,
+      biases: newFilters.biases.length > 0 ? newFilters.biases : undefined,
+      timeRange: newFilters.timeRange,
+    });
+  };
 
   // Update time every second
   useEffect(() => {
@@ -62,8 +87,8 @@ export function Header() {
         isVisible ? 'translate-y-0' : '-translate-y-full'
       )}
     >
-      {/* Left section - Mobile menu button, Breaking indicator & time */}
-      <div className="flex items-center gap-4">
+      {/* Left section - Mobile menu button, Live badge, refresh & time */}
+      <div className="flex items-center gap-3">
         {/* Mobile menu button */}
         <button
           onClick={openSidebar}
@@ -73,8 +98,24 @@ export function Header() {
           <Menu className="size-5" />
         </button>
 
+        {/* Live badge & refresh */}
+        <div className="flex items-center gap-2">
+          <LiveBadge />
+          <button
+            onClick={triggerRefetch}
+            disabled={isRefetching}
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground disabled:opacity-50"
+            aria-label="Refresh feed"
+          >
+            <RefreshCw
+              className={cn('size-4', isRefetching && 'animate-spin')}
+            />
+          </button>
+        </div>
+
         {/* Desktop only: Breaking indicator & time */}
-        <div className="hidden items-center gap-4 lg:flex">
+        <div className="hidden items-center gap-3 lg:flex">
+          <div className="h-6 w-px bg-border" />
           <BreakingIndicator urgentStats={urgentStats} />
           <div className="h-6 w-px bg-border" />
           <div className="flex items-center gap-2">
@@ -103,6 +144,11 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
+        {/* Filter Bar */}
+        <div className="hidden sm:block">
+          <FilterBar onFilterChange={handleFilterChange} />
+        </div>
+
         {/* Alert count badge */}
         <AlertButton count={urgentStats?.urgentCount ?? 0} />
 

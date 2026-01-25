@@ -269,3 +269,10 @@
     @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-background;
   }
 }
+
+/* Safe area for mobile devices */
+@layer utilities {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

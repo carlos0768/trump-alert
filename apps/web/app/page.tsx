@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { RefreshCw, AlertTriangle, Radio } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Radio } from 'lucide-react';
 import { TrumpSpinner } from '@/components/ui';
 import { ArticleCard } from '@/components/article';
 import { TrumpIndexChart, type TrumpIndexDataPoint } from '@/components/charts';
@@ -9,51 +9,22 @@ import {
   TrendingTopics,
   mockTrendingTopics,
   StockWidget,
-  FilterBar,
 } from '@/components/dashboard';
 import { ExecutiveOrderWidget } from '@/components/executive-order';
 import { Button } from '@/components/ui/button';
-import { LiveBadge } from '@/components/ui/badge';
 import {
   useArticles,
   useTrumpIndex,
   useStockData,
   useTrendingTopics,
+  useHeaderStore,
 } from '@/lib/hooks';
 import { mockTrumpIndexData } from '@/lib/mock-data';
-import type { ArticleFilters } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
-  const [filters, setFilters] = useState<ArticleFilters>({});
-  const [isFeedHeaderVisible, setIsFeedHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const currentScrollY = container.scrollTop;
-      const scrollDelta = currentScrollY - lastScrollY.current;
-
-      if (window.innerWidth < 1024) {
-        if (scrollDelta > 10 && currentScrollY > 60) {
-          setIsFeedHeaderVisible(false);
-        } else if (scrollDelta < -10) {
-          setIsFeedHeaderVisible(true);
-        }
-      } else {
-        setIsFeedHeaderVisible(true);
-      }
-
-      lastScrollY.current = currentScrollY;
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+  const { filters, setRefetchFn, setIsRefetching } = useHeaderStore();
 
   const {
     data: articlesData,
@@ -64,6 +35,15 @@ export default function DashboardPage() {
     isFetchingNextPage,
     refetch: refetchArticles,
   } = useArticles(filters);
+
+  // Sync refetch function and state with header store
+  useEffect(() => {
+    setRefetchFn(() => refetchArticles());
+  }, [refetchArticles, setRefetchFn]);
+
+  useEffect(() => {
+    setIsRefetching(articlesRefetching);
+  }, [articlesRefetching, setIsRefetching]);
 
   const { data: trumpIndexData, isLoading: indexLoading } = useTrumpIndex();
   const { data: stockData, isLoading: stockLoading } = useStockData();
@@ -95,78 +75,14 @@ export default function DashboardPage() {
       ? trendingTopics.map((t, i) => ({ ...t, rank: i + 1 }))
       : mockTrendingTopics;
 
-  const handleFilterChange = (newFilters: {
-    impactLevels: string[];
-    biases: string[];
-    timeRange: string;
-  }) => {
-    setFilters({
-      impactLevels:
-        newFilters.impactLevels.length > 0
-          ? newFilters.impactLevels
-          : undefined,
-      biases: newFilters.biases.length > 0 ? newFilters.biases : undefined,
-      timeRange: newFilters.timeRange,
-    });
-  };
-
-  // Count urgent articles
-  const urgentCount = articles.filter((a) => a.impactLevel === 'S').length;
-
   return (
     <div className="flex h-full flex-col">
-      {/* Breaking News Ticker */}
-      <NewsTicker articles={articles.slice(0, 5)} />
-
       <div className="flex flex-1 overflow-hidden">
         {/* Main Feed */}
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto border-r border-border"
         >
-          {/* Feed Header */}
-          <div
-            className={cn(
-              'sticky top-0 z-10 border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-md transition-transform duration-300 lg:translate-y-0',
-              isFeedHeaderVisible ? 'translate-y-0' : '-translate-y-full'
-            )}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <h1 className="font-headline text-xl tracking-wider text-foreground">
-                  LIVE FEED
-                </h1>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => refetchArticles()}
-                  disabled={articlesRefetching}
-                  className="text-muted-foreground"
-                >
-                  <RefreshCw
-                    className={cn(
-                      'size-4',
-                      articlesRefetching && 'animate-spin'
-                    )}
-                  />
-                </Button>
-                <LiveBadge />
-
-                {urgentCount > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-lg bg-urgent/10 px-2.5 py-1 text-urgent">
-                    <AlertTriangle className="size-3.5" />
-                    <span className="font-headline text-xs tracking-wider">
-                      {urgentCount} CRITICAL
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Filter Bar */}
-              <FilterBar onFilterChange={handleFilterChange} />
-            </div>
-          </div>
-
           {/* Articles Feed */}
           <div className="divide-y divide-border">
             {articlesLoading ? (
@@ -273,44 +189,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </aside>
-      </div>
-    </div>
-  );
-}
-
-// News Ticker Component
-interface NewsTickerProps {
-  articles: Array<{
-    id: string;
-    title: string;
-    titleJa?: string;
-    impactLevel: string;
-  }>;
-}
-
-function NewsTicker({ articles }: NewsTickerProps) {
-  if (articles.length === 0) return null;
-
-  // Duplicate for seamless loop
-  const tickerItems = [...articles, ...articles];
-
-  return (
-    <div className="ticker-container border-b border-primary-700">
-      <div className="ticker-content">
-        {tickerItems.map((article, index) => (
-          <div key={`${article.id}-${index}`} className="ticker-item">
-            {article.impactLevel === 'S' && (
-              <span className="flex items-center gap-1 text-white font-bold">
-                <AlertTriangle className="size-3" />
-                BREAKING
-              </span>
-            )}
-            <span className="text-white/90">
-              {article.titleJa || article.title}
-            </span>
-            <span className="ticker-divider" />
-          </div>
-        ))}
       </div>
     </div>
   );
