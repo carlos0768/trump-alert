@@ -82,7 +82,6 @@ export default function ArticlePage({ params }: ArticlePageProps) {
 
   // Prefer Japanese if available
   const displayTitle = article.titleJa || article.title;
-  const displayContent = article.contentJa || article.content;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
